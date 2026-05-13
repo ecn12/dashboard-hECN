@@ -1,43 +1,11 @@
 ﻿import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from scipy.interpolate import PchipInterpolator
-import numpy as np
 
 st.set_page_config(
     page_title="Dashboard Hidrológico",
     layout="wide"
 )
-
-# ============================================================
-# SUAVIZAÇÃO
-# ============================================================
-
-def smooth_curve(datas, valores, pontos=500):
-    y = np.array(valores, dtype=float)
-
-    mask = ~np.isnan(y)
-
-    datas_valid = pd.to_datetime(datas[mask])
-    y_valid = y[mask]
-
-    if len(y_valid) < 3:
-        return datas, valores
-
-    x = np.arange(len(datas_valid))
-    x_smooth = np.linspace(x.min(), x.max(), pontos)
-
-    interpolador = PchipInterpolator(x, y_valid)
-    y_smooth = interpolador(x_smooth)
-
-    datas_smooth = pd.date_range(
-        start=datas_valid.min(),
-        end=datas_valid.max(),
-        periods=pontos
-    )
-
-    return datas_smooth, y_smooth
-
 
 # ============================================================
 # PROCESSAMENTO
@@ -57,7 +25,7 @@ def processar_dados(df):
     df['chuva'] = pd.to_numeric(df['chuva'], errors='coerce')
     df['nivel'] = pd.to_numeric(df['nivel'], errors='coerce')
 
-    # filtros
+    # filtros de consistência
     df.loc[df['nivel'] > 20, 'nivel'] = pd.NA
     df.loc[df['chuva'] > 500, 'chuva'] = pd.NA
 
@@ -66,14 +34,15 @@ def processar_dados(df):
     # P95 da série histórica completa
     P95 = df['nivel'].quantile(0.05)
 
+    # preparação temporal
     df['data'] = df['datetime'].dt.floor('D')
     df['dia_ano'] = df['datetime'].dt.dayofyear
 
-    # máximo diário
+    # máximo diário observado
     nivel_diario = df.groupby('data')['nivel'].max().reset_index()
     nivel_diario['dia_ano'] = nivel_diario['data'].dt.dayofyear
 
-    # estatísticas históricas
+    # estatísticas históricas por dia do ano
     estatisticas = nivel_diario.groupby('dia_ano')['nivel'].agg([
         ('minimo', 'min'),
         ('p10', lambda x: x.quantile(0.90)),
@@ -125,26 +94,23 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
     fig = go.Figure()
 
     # envelope histórico
-    x_min, y_min = smooth_curve(df_plot['data'], df_plot['minimo'])
-    x_max, y_max = smooth_curve(df_plot['data'], df_plot['maximo'])
-
     fig.add_trace(go.Scatter(
-        x=x_min,
-        y=y_min,
+        x=df_plot['data'],
+        y=df_plot['minimo'],
         line=dict(width=0),
         showlegend=False
     ))
 
     fig.add_trace(go.Scatter(
-        x=x_max,
-        y=y_max,
+        x=df_plot['data'],
+        y=df_plot['maximo'],
         fill='tonexty',
         fillcolor='rgba(176,196,222,0.20)',
         line=dict(width=0),
         name='Envelope histórico'
     ))
 
-    # P95 histórica
+    # P95 histórica da série completa
     fig.add_trace(go.Scatter(
         x=[df_plot['data'].min(), df_plot['data'].max()],
         y=[P95, P95],
@@ -157,6 +123,7 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         )
     ))
 
+    # séries
     series = {
         'MÁX': ('maximo', '#B08D57'),
         'P10': ('p10', '#F4C27A'),
@@ -168,11 +135,9 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
     for nome, (col, cor) in series.items():
 
-        x_s, y_s = smooth_curve(df_plot['data'], df_plot[col])
-
         fig.add_trace(go.Scatter(
-            x=x_s,
-            y=y_s,
+            x=df_plot['data'],
+            y=df_plot[col],
             mode='lines',
             name=nome,
             line=dict(
