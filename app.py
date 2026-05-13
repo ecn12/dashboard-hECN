@@ -25,7 +25,7 @@ def processar_dados(df):
     df['chuva'] = pd.to_numeric(df['chuva'], errors='coerce')
     df['nivel'] = pd.to_numeric(df['nivel'], errors='coerce')
 
-    # filtros
+    # filtros de consistência
     df.loc[df['nivel'] > 20, 'nivel'] = pd.NA
     df.loc[df['chuva'] > 500, 'chuva'] = pd.NA
 
@@ -35,12 +35,11 @@ def processar_dados(df):
     P95 = df['nivel'].quantile(0.05)
 
     df['data'] = df['datetime'].dt.floor('D')
-    df['dia_ano'] = df['datetime'].dt.dayofyear
 
     # máximo diário
     nivel_diario = df.groupby('data')['nivel'].max()
 
-    # cria série contínua diária
+    # cria série diária contínua
     datas_completas = pd.date_range(
         start=nivel_diario.index.min(),
         end=nivel_diario.index.max(),
@@ -52,10 +51,11 @@ def processar_dados(df):
     nivel_diario = nivel_diario.reset_index()
     nivel_diario.columns = ['data', 'nivel']
 
-    nivel_diario['dia_ano'] = nivel_diario['data'].dt.dayofyear
+    # chave calendário correta
+    nivel_diario['mes_dia'] = nivel_diario['data'].dt.strftime('%m-%d')
 
-    # estatísticas históricas
-    estatisticas = nivel_diario.groupby('dia_ano')['nivel'].agg([
+    # estatísticas históricas por mês-dia
+    estatisticas = nivel_diario.groupby('mes_dia')['nivel'].agg([
         ('minimo', 'min'),
         ('p10', lambda x: x.quantile(0.90)),
         ('p50', lambda x: x.quantile(0.50)),
@@ -102,11 +102,7 @@ def configurar_eixo_x(fig, periodo):
 # ============================================================
 
 def hover(nome):
-    return (
-        f'<b>%{{x|%d/%m/%Y}}</b><br>'
-        f'{nome}: %{{y:.2f}} m'
-        '<extra></extra>'
-    )
+    return f'{nome}: %{{y:.2f}} m<extra></extra>'
 
 
 # ============================================================
@@ -123,7 +119,7 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
     cols_hist = ['minimo', 'p10', 'p50', 'p90', 'maximo']
     df_plot.loc[df_plot['nivel'].isna(), cols_hist] = pd.NA
 
-    # envelope
+    # envelope histórico
     fig.add_trace(go.Scatter(
         x=df_plot['data'],
         y=df_plot['minimo'],
@@ -144,7 +140,7 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         hovertemplate=hover('Envelope histórico')
     ))
 
-    # P95
+    # P95 histórica
     fig.add_trace(go.Scatter(
         x=[df_plot['data'].min(), df_plot['data'].max()],
         y=[P95, P95],
@@ -191,7 +187,6 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
     # eixo Y dinâmico
     if ocultar_percentis:
-
         y_max = max(
             df_plot['nivel'].dropna().max(),
             P95
@@ -205,7 +200,10 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         yaxis_title='Nível (m)',
         height=700,
         hovermode='x unified',
-        template='plotly_white'
+        template='plotly_white',
+        xaxis=dict(
+            hoverformat="%d/%m/%Y"
+        )
     )
 
     configurar_eixo_x(fig, periodo)
@@ -264,7 +262,7 @@ if arquivo:
 
     grafico = observado.merge(
         estatisticas,
-        on='dia_ano',
+        on='mes_dia',
         how='left'
     )
 
