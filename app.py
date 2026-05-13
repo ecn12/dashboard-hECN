@@ -10,27 +10,30 @@ st.set_page_config(
 )
 
 # ============================================================
-# SUAVIZAÇÃO
+# SUAVIZAÇÃO CORRETA
 # ============================================================
 
 def smooth_curve(datas, valores, pontos=500):
-    x = np.arange(len(datas))
     y = np.array(valores, dtype=float)
 
     mask = ~np.isnan(y)
-    x_valid = x[mask]
+
+    datas_valid = pd.to_datetime(datas[mask])
     y_valid = y[mask]
 
-    if len(x_valid) < 3:
+    if len(y_valid) < 3:
         return datas, valores
 
-    x_smooth = np.linspace(x_valid.min(), x_valid.max(), pontos)
+    x = np.arange(len(datas_valid))
+    x_smooth = np.linspace(x.min(), x.max(), pontos)
 
-    interpolador = PchipInterpolator(x_valid, y_valid)
+    interpolador = PchipInterpolator(x, y_valid)
     y_smooth = interpolador(x_smooth)
 
-    datas_smooth = pd.to_datetime(
-        np.interp(x_smooth, x, datas.astype(np.int64))
+    datas_smooth = pd.date_range(
+        start=datas_valid.min(),
+        end=datas_valid.max(),
+        periods=pontos
     )
 
     return datas_smooth, y_smooth
@@ -54,24 +57,19 @@ def processar_dados(df):
     df['chuva'] = pd.to_numeric(df['chuva'], errors='coerce')
     df['nivel'] = pd.to_numeric(df['nivel'], errors='coerce')
 
-    # filtros de consistência
     df.loc[df['nivel'] > 20, 'nivel'] = pd.NA
     df.loc[df['chuva'] > 500, 'chuva'] = pd.NA
 
     nome_estacao = df['estacao'].dropna().iloc[0]
 
-    # nível excedido 95% do tempo
     P95 = df['nivel'].quantile(0.05)
 
-    # preparação
     df['data'] = df['datetime'].dt.floor('D')
     df['dia_ano'] = df['datetime'].dt.dayofyear
 
-    # nível máximo diário
     nivel_diario = df.groupby('data')['nivel'].max().reset_index()
     nivel_diario['dia_ano'] = nivel_diario['data'].dt.dayofyear
 
-    # estatísticas históricas
     estatisticas = nivel_diario.groupby('dia_ano')['nivel'].agg([
         ('minimo', 'min'),
         ('p10', lambda x: x.quantile(0.90)),
@@ -91,27 +89,26 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
     fig = go.Figure()
 
-    # envelope histórico
-    x_fill_min, y_fill_min = smooth_curve(df_plot['data'], df_plot['minimo'])
-    x_fill_max, y_fill_max = smooth_curve(df_plot['data'], df_plot['maximo'])
+    # envelope
+    x_min, y_min = smooth_curve(df_plot['data'], df_plot['minimo'])
+    x_max, y_max = smooth_curve(df_plot['data'], df_plot['maximo'])
 
     fig.add_trace(go.Scatter(
-        x=x_fill_min,
-        y=y_fill_min,
+        x=x_min,
+        y=y_min,
         line=dict(width=0),
         showlegend=False
     ))
 
     fig.add_trace(go.Scatter(
-        x=x_fill_max,
-        y=y_fill_max,
+        x=x_max,
+        y=y_max,
         fill='tonexty',
         fillcolor='rgba(176,196,222,0.20)',
         line=dict(width=0),
         name='Envelope histórico'
     ))
 
-    # séries
     series = {
         'MÁX': ('maximo', '#B08D57'),
         'P10': ('p10', '#F4C27A'),
@@ -137,7 +134,6 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             )
         ))
 
-    # P95
     fig.add_hline(
         y=P95,
         line_dash='dot',
@@ -146,15 +142,12 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
     fig.add_annotation(
         xref='paper',
-        x=1.03,
+        x=1.02,
         y=P95,
         yref='y',
         text=f'P95 = {P95:.2f} m',
         showarrow=False,
-        font=dict(
-            color='red',
-            size=12
-        )
+        font=dict(color='red')
     )
 
     fig.update_layout(
@@ -164,7 +157,7 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         height=700,
         hovermode='x unified',
         template='plotly_white',
-        margin=dict(r=140)
+        margin=dict(r=130)
     )
 
     fig.update_xaxes(
