@@ -37,8 +37,21 @@ def processar_dados(df):
     df['data'] = df['datetime'].dt.floor('D')
     df['dia_ano'] = df['datetime'].dt.dayofyear
 
-    # máximo diário observado
-    nivel_diario = df.groupby('data')['nivel'].max().reset_index()
+    # máximo diário
+    nivel_diario = df.groupby('data')['nivel'].max()
+
+    # cria série contínua diária
+    datas_completas = pd.date_range(
+        start=nivel_diario.index.min(),
+        end=nivel_diario.index.max(),
+        freq='D'
+    )
+
+    nivel_diario = nivel_diario.reindex(datas_completas)
+
+    nivel_diario = nivel_diario.reset_index()
+    nivel_diario.columns = ['data', 'nivel']
+
     nivel_diario['dia_ano'] = nivel_diario['data'].dt.dayofyear
 
     # estatísticas históricas
@@ -85,6 +98,18 @@ def configurar_eixo_x(fig, periodo):
 
 
 # ============================================================
+# HOVER
+# ============================================================
+
+def hover(nome):
+    return (
+        f'<b>%{{x|%d/%m/%Y}}</b><br>'
+        f'{nome}: %{{y:.2f}} m'
+        '<extra></extra>'
+    )
+
+
+# ============================================================
 # GRÁFICO
 # ============================================================
 
@@ -94,13 +119,18 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
     ocultar_percentis = periodo in ['12 meses', 'Série completa']
 
-    # envelope histórico
+    # quebra envelope onde não há observação
+    cols_hist = ['minimo', 'p10', 'p50', 'p90', 'maximo']
+    df_plot.loc[df_plot['nivel'].isna(), cols_hist] = pd.NA
+
+    # envelope
     fig.add_trace(go.Scatter(
         x=df_plot['data'],
         y=df_plot['minimo'],
         line=dict(width=0),
         showlegend=False,
-        connectgaps=False
+        connectgaps=False,
+        hoverinfo='skip'
     ))
 
     fig.add_trace(go.Scatter(
@@ -110,10 +140,11 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         fillcolor='rgba(176,196,222,0.20)',
         line=dict(width=0),
         name='Envelope histórico',
-        connectgaps=False
+        connectgaps=False,
+        hovertemplate=hover('Envelope histórico')
     ))
 
-    # P95 histórica
+    # P95
     fig.add_trace(go.Scatter(
         x=[df_plot['data'].min(), df_plot['data'].max()],
         y=[P95, P95],
@@ -124,7 +155,7 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             width=2,
             dash='dot'
         ),
-        connectgaps=False
+        hovertemplate=hover('P95 histórica')
     ))
 
     series = {
@@ -154,11 +185,13 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
                 width=4 if nome == 'NÍVEL' else 2,
                 dash='solid' if nome == 'NÍVEL' else 'dash'
             ),
-            connectgaps=False
+            connectgaps=False,
+            hovertemplate=hover(nome)
         ))
 
     # eixo Y dinâmico
     if ocultar_percentis:
+
         y_max = max(
             df_plot['nivel'].dropna().max(),
             P95
