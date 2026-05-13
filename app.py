@@ -1,16 +1,16 @@
-import streamlit as st
+Ôªøimport streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from scipy.interpolate import PchipInterpolator
 import numpy as np
 
 st.set_page_config(
-    page_title="Dashboard HidrolÛgico",
+    page_title="Dashboard Hidrol√≥gico",
     layout="wide"
 )
 
 # ============================================================
-# SUAVIZA«√O
+# SUAVIZA√á√ÉO
 # ============================================================
 
 def smooth_curve(datas, valores, pontos=500):
@@ -54,24 +54,24 @@ def processar_dados(df):
     df['chuva'] = pd.to_numeric(df['chuva'], errors='coerce')
     df['nivel'] = pd.to_numeric(df['nivel'], errors='coerce')
 
-    # filtros de consistÍncia
+    # filtros de consist√™ncia
     df.loc[df['nivel'] > 20, 'nivel'] = pd.NA
     df.loc[df['chuva'] > 500, 'chuva'] = pd.NA
 
     nome_estacao = df['estacao'].dropna().iloc[0]
 
-    # P95 (nÌvel excedido 95% do tempo)
+    # P95 (n√≠vel excedido 95% do tempo)
     P95 = df['nivel'].quantile(0.05)
 
-    # preparaÁ„o temporal
+    # prepara√ß√£o temporal
     df['data'] = df['datetime'].dt.floor('D')
     df['dia_ano'] = df['datetime'].dt.dayofyear
 
-    # nÌvel m·ximo di·rio
+    # n√≠vel m√°ximo di√°rio
     nivel_diario = df.groupby('data')['nivel'].max().reset_index()
     nivel_diario['dia_ano'] = nivel_diario['data'].dt.dayofyear
 
-    # estatÌsticas histÛricas
+    # estat√≠sticas hist√≥ricas
     estatisticas = nivel_diario.groupby('dia_ano')['nivel'].agg([
         ('minimo', 'min'),
         ('p10', lambda x: x.quantile(0.90)),
@@ -84,14 +84,14 @@ def processar_dados(df):
 
 
 # ============================================================
-# GR¡FICO
+# GR√ÅFICO
 # ============================================================
 
 def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
     fig = go.Figure()
 
-    # envelope histÛrico
+    # envelope hist√≥rico
     x_fill_min, y_fill_min = smooth_curve(df_plot['data'], df_plot['minimo'])
     x_fill_max, y_fill_max = smooth_curve(df_plot['data'], df_plot['maximo'])
 
@@ -108,17 +108,17 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         fill='tonexty',
         fillcolor='rgba(176,196,222,0.25)',
         line=dict(width=0),
-        name='Envelope histÛrico'
+        name='Envelope hist√≥rico'
     ))
 
-    # sÈries
+    # s√©ries
     series = {
-        'M¡X': ('maximo', 'saddlebrown'),
+        'M√ÅX': ('maximo', 'saddlebrown'),
         'P10': ('p10', 'darkorange'),
         'P50': ('p50', 'green'),
         'P90': ('p90', 'red'),
         'MIN': ('minimo', 'purple'),
-        'NÕVEL': ('nivel', 'royalblue')
+        'N√çVEL': ('nivel', 'royalblue')
     }
 
     for nome, (col, cor) in series.items():
@@ -132,8 +132,8 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             name=nome,
             line=dict(
                 color=cor,
-                width=4 if nome == 'NÕVEL' else 2,
-                dash='solid' if nome == 'NÕVEL' else 'dash'
+                width=4 if nome == 'N√çVEL' else 2,
+                dash='solid' if nome == 'N√çVEL' else 'dash'
             )
         ))
 
@@ -148,7 +148,7 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
     fig.update_layout(
         title=f'{nome_estacao} - {periodo}',
         xaxis_title='Data',
-        yaxis_title='NÌvel (m)',
+        yaxis_title='N√≠vel (m)',
         height=700,
         hovermode='x unified',
         template='plotly_white'
@@ -161,10 +161,10 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 # APP
 # ============================================================
 
-st.title("Dashboard HidrolÛgico")
+st.title("Dashboard Hidrol√≥gico")
 
 arquivo = st.file_uploader(
-    "Upload CSV da estaÁ„o",
+    "Upload CSV da esta√ß√£o",
     type=['csv']
 )
 
@@ -179,8 +179,8 @@ if arquivo:
     nome_estacao, P95, nivel_diario, estatisticas = processar_dados(df)
 
     periodo = st.radio(
-        "Selecione o perÌodo",
-        ['15 dias', '1 mÍs', '4 meses', '12 meses'],
+        "Selecione o per√≠odo",
+        ['15 dias', '1 m√™s', '4 meses', '12 meses'],
         horizontal=True
     )
 
@@ -189,7 +189,7 @@ if arquivo:
     if periodo == '15 dias':
         inicio = ultima_data - pd.Timedelta(days=15)
 
-    elif periodo == '1 mÍs':
+    elif periodo == '1 m√™s':
         inicio = ultima_data - pd.DateOffset(months=1)
 
     elif periodo == '4 meses':
