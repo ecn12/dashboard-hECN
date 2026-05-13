@@ -60,10 +60,10 @@ def processar_dados(df):
 
     nome_estacao = df['estacao'].dropna().iloc[0]
 
-    # P95 (nível excedido 95% do tempo)
+    # nível excedido 95% do tempo
     P95 = df['nivel'].quantile(0.05)
 
-    # preparação temporal
+    # preparação
     df['data'] = df['datetime'].dt.floor('D')
     df['dia_ano'] = df['datetime'].dt.dayofyear
 
@@ -106,18 +106,18 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         x=x_fill_max,
         y=y_fill_max,
         fill='tonexty',
-        fillcolor='rgba(176,196,222,0.25)',
+        fillcolor='rgba(176,196,222,0.20)',
         line=dict(width=0),
         name='Envelope histórico'
     ))
 
     # séries
     series = {
-        'MÁX': ('maximo', 'saddlebrown'),
-        'P10': ('p10', 'darkorange'),
-        'P50': ('p50', 'green'),
-        'P90': ('p90', 'red'),
-        'MIN': ('minimo', 'purple'),
+        'MÁX': ('maximo', '#B08D57'),
+        'P10': ('p10', '#F4C27A'),
+        'P50': ('p50', '#9BC59D'),
+        'P90': ('p90', '#E7A5A5'),
+        'MIN': ('minimo', '#C7B3D8'),
         'NÍVEL': ('nivel', 'royalblue')
     }
 
@@ -141,8 +141,20 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
     fig.add_hline(
         y=P95,
         line_dash='dot',
-        line_color='red',
-        annotation_text=f'P95 = {P95:.2f} m'
+        line_color='red'
+    )
+
+    fig.add_annotation(
+        xref='paper',
+        x=1.03,
+        y=P95,
+        yref='y',
+        text=f'P95 = {P95:.2f} m',
+        showarrow=False,
+        font=dict(
+            color='red',
+            size=12
+        )
     )
 
     fig.update_layout(
@@ -151,7 +163,14 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         yaxis_title='Nível (m)',
         height=700,
         hovermode='x unified',
-        template='plotly_white'
+        template='plotly_white',
+        margin=dict(r=140)
+    )
+
+    fig.update_xaxes(
+        tickformat="%d/%m/%Y",
+        showgrid=True,
+        tickangle=0
     )
 
     return fig
