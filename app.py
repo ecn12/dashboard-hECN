@@ -25,16 +25,15 @@ def processar_dados(df):
     df['chuva'] = pd.to_numeric(df['chuva'], errors='coerce')
     df['nivel'] = pd.to_numeric(df['nivel'], errors='coerce')
 
-    # filtros de consistência
+    # filtros
     df.loc[df['nivel'] > 20, 'nivel'] = pd.NA
     df.loc[df['chuva'] > 500, 'chuva'] = pd.NA
 
     nome_estacao = df['estacao'].dropna().iloc[0]
 
-    # P95 da série histórica completa
+    # P95 histórica da série completa
     P95 = df['nivel'].quantile(0.05)
 
-    # preparação temporal
     df['data'] = df['datetime'].dt.floor('D')
     df['dia_ano'] = df['datetime'].dt.dayofyear
 
@@ -42,7 +41,7 @@ def processar_dados(df):
     nivel_diario = df.groupby('data')['nivel'].max().reset_index()
     nivel_diario['dia_ano'] = nivel_diario['data'].dt.dayofyear
 
-    # estatísticas históricas por dia do ano
+    # estatísticas históricas
     estatisticas = nivel_diario.groupby('dia_ano')['nivel'].agg([
         ('minimo', 'min'),
         ('p10', lambda x: x.quantile(0.90)),
@@ -93,12 +92,15 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
     fig = go.Figure()
 
+    ocultar_percentis = periodo in ['12 meses', 'Série completa']
+
     # envelope histórico
     fig.add_trace(go.Scatter(
         x=df_plot['data'],
         y=df_plot['minimo'],
         line=dict(width=0),
-        showlegend=False
+        showlegend=False,
+        connectgaps=False
     ))
 
     fig.add_trace(go.Scatter(
@@ -107,10 +109,11 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         fill='tonexty',
         fillcolor='rgba(176,196,222,0.20)',
         line=dict(width=0),
-        name='Envelope histórico'
+        name='Envelope histórico',
+        connectgaps=False
     ))
 
-    # P95 histórica da série completa
+    # P95 histórica
     fig.add_trace(go.Scatter(
         x=[df_plot['data'].min(), df_plot['data'].max()],
         y=[P95, P95],
@@ -120,10 +123,10 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             color='red',
             width=2,
             dash='dot'
-        )
+        ),
+        connectgaps=False
     ))
 
-    # séries
     series = {
         'MÁX': ('maximo', '#B08D57'),
         'P10': ('p10', '#F4C27A'),
@@ -135,17 +138,33 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
     for nome, (col, cor) in series.items():
 
+        visible = True
+
+        if ocultar_percentis and nome != 'NÍVEL':
+            visible = 'legendonly'
+
         fig.add_trace(go.Scatter(
             x=df_plot['data'],
             y=df_plot[col],
             mode='lines',
             name=nome,
+            visible=visible,
             line=dict(
                 color=cor,
                 width=4 if nome == 'NÍVEL' else 2,
                 dash='solid' if nome == 'NÍVEL' else 'dash'
-            )
+            ),
+            connectgaps=False
         ))
+
+    # eixo Y dinâmico
+    if ocultar_percentis:
+        y_max = max(
+            df_plot['nivel'].dropna().max(),
+            P95
+        ) * 1.10
+
+        fig.update_yaxes(range=[0, y_max])
 
     fig.update_layout(
         title=f'{nome_estacao} - {periodo}',
