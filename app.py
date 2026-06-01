@@ -29,6 +29,36 @@ if arquivo:
 
     ultima_data = df["datetime"].max()
 
+    df = df.sort_values("datetime")
+
+df["nivel"] = pd.to_numeric(
+    df.iloc[:, 3],
+    errors="coerce"
+)
+
+df = df.dropna(subset=["nivel"])
+
+nivel_atual = df["nivel"].iloc[-1]
+
+if len(df) >= 8:
+
+    nivel_7dias = df["nivel"].iloc[-8]
+
+    variacao = nivel_atual - nivel_7dias
+
+else:
+
+    variacao = 0
+
+    if variacao > 0.05:
+    tendencia = "↑ Crescente"
+
+elif variacao < -0.05:
+    tendencia = "↓ Decrescente"
+
+else:
+    tendencia = "→ Estável"
+
     dias_dados = (
         ultima_data.date()
         -
