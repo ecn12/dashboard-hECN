@@ -26,25 +26,25 @@ if arquivo:
         encoding="latin1"
     )
 
-    # Coluna de data
+    # Data/Hora
     df["datetime"] = pd.to_datetime(
         df.iloc[:, 1],
         format="%d/%m/%Y %H:%M",
         errors="coerce"
     )
 
-    # Coluna de nível
+    # Nível
     df["nivel"] = pd.to_numeric(
         df.iloc[:, 3],
         errors="coerce"
     )
 
-    # Remove linhas inválidas
+    # Limpeza
     df = df.dropna(
         subset=["datetime", "nivel"]
     )
 
-    # Ordena por data
+    # Ordenação
     df = df.sort_values(
         "datetime"
     )
@@ -63,9 +63,19 @@ if arquivo:
 
     nivel_atual = df["nivel"].iloc[-1]
 
-    if len(df) >= 8:
+    # =========================
+    # VARIAÇÃO REAL DE 7 DIAS
+    # =========================
 
-        nivel_7dias = df["nivel"].iloc[-8]
+    data_7dias = ultima_data - pd.Timedelta(days=7)
+
+    df_7dias = df[
+        df["datetime"] <= data_7dias
+    ]
+
+    if len(df_7dias) > 0:
+
+        nivel_7dias = df_7dias.iloc[-1]["nivel"]
 
         variacao = (
             nivel_atual
@@ -76,6 +86,10 @@ if arquivo:
     else:
 
         variacao = 0
+
+    # =========================
+    # TENDÊNCIA
+    # =========================
 
     if variacao > 0.05:
 
@@ -125,7 +139,7 @@ if arquivo:
     st.markdown("---")
 
     # =========================
-    # MAPA + CARD
+    # MAPA + CARD OPERACIONAL
     # =========================
 
     col_mapa, col_card = st.columns(
@@ -138,12 +152,10 @@ if arquivo:
             "Localização da Estação"
         )
 
-        mapa = pd.DataFrame(
-            {
-                "lat": [-22.520277],
-                "lon": [-42.830555]
-            }
-        )
+        mapa = pd.DataFrame({
+            "lat": [-22.520277],
+            "lon": [-42.830555]
+        })
 
         st.map(mapa)
 
@@ -172,6 +184,49 @@ if arquivo:
             "Tendência",
             tendencia
         )
+
+        st.write("**Latitude:** -22.5203")
+        st.write("**Longitude:** -42.8306")
+
+    st.markdown("---")
+
+    # =========================
+    # RESUMO OPERACIONAL
+    # =========================
+
+    st.subheader(
+        "Resumo Operacional"
+    )
+
+    resumo = pd.DataFrame({
+
+        "Estação": ["Quizanga"],
+
+        "Nível Atual (m)": [
+            round(
+                nivel_atual,
+                2
+            )
+        ],
+
+        "Variação 7 dias (m)": [
+            round(
+                variacao,
+                2
+            )
+        ],
+
+        "Tendência": [
+            tendencia
+        ]
+
+    })
+
+    st.dataframe(
+        resumo,
+        use_container_width=True,
+        hide_index=True
+    )
 
     st.markdown("---")
 
