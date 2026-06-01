@@ -1,4 +1,9 @@
 import streamlit as st
+
+st.title("TESTE QUIZANGA")
+
+st.write("Página Quizanga")
+import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
