@@ -25,21 +25,17 @@ def processar_dados(df):
     df['chuva'] = pd.to_numeric(df['chuva'], errors='coerce')
     df['nivel'] = pd.to_numeric(df['nivel'], errors='coerce')
 
-    # filtros de consistência
     df.loc[df['nivel'] > 20, 'nivel'] = pd.NA
     df.loc[df['chuva'] > 500, 'chuva'] = pd.NA
 
     nome_estacao = df['estacao'].dropna().iloc[0]
 
-    # P95 da série histórica completa
     P95 = df['nivel'].quantile(0.05)
 
     df['data'] = df['datetime'].dt.floor('D')
 
-    # máximo diário
     nivel_diario = df.groupby('data')['nivel'].max()
 
-    # cria série contínua diária
     datas_completas = pd.date_range(
         start=nivel_diario.index.min(),
         end=nivel_diario.index.max(),
@@ -51,10 +47,8 @@ def processar_dados(df):
     nivel_diario = nivel_diario.reset_index()
     nivel_diario.columns = ['data', 'nivel']
 
-    # chave sazonal
     nivel_diario['mes_dia'] = nivel_diario['data'].dt.strftime('%m-%d')
 
-    # estatísticas históricas
     estatisticas = nivel_diario.groupby('mes_dia')['nivel'].agg([
         ('minimo', 'min'),
         ('p10', lambda x: x.quantile(0.90)),
@@ -67,47 +61,61 @@ def processar_dados(df):
 
 
 # ============================================================
-# EIXO X
+# INDICADORES
 # ============================================================
+
+def calcular_indicadores(nivel_diario):
+
+    serie = nivel_diario['nivel'].dropna()
+
+    if len(serie) < 8:
+        return 0, 0, 0, 0, "→ Estável"
+
+    nivel_atual = serie.iloc[-1]
+
+    percentil = ((serie >= nivel_atual).sum() / len(serie)) * 100
+    percentil = round(percentil)
+
+    nivel_7d = serie.iloc[-8]
+
+    variacao_m = nivel_atual - nivel_7d
+
+    variacao_pct = (variacao_m / nivel_7d) * 100
+
+    if variacao_m > 0.05:
+        tendencia = "↑ Crescente"
+    elif variacao_m < -0.05:
+        tendencia = "↓ Decrescente"
+    else:
+        tendencia = "→ Estável"
+
+    return (
+        nivel_atual,
+        percentil,
+        variacao_m,
+        variacao_pct,
+        tendencia
+    )
+
 
 def configurar_eixo_x(fig, periodo):
 
     if periodo in ['15 dias', '1 mês']:
-        fig.update_xaxes(
-            tickformat="%d/%m",
-            dtick="D2"
-        )
+        fig.update_xaxes(tickformat="%d/%m", dtick="D2")
 
     elif periodo == '4 meses':
-        fig.update_xaxes(
-            tickformat="%b/%Y",
-            dtick="M1"
-        )
+        fig.update_xaxes(tickformat="%b/%Y", dtick="M1")
 
     elif periodo == '12 meses':
-        fig.update_xaxes(
-            tickformat="%b/%Y",
-            dtick="M2"
-        )
+        fig.update_xaxes(tickformat="%b/%Y", dtick="M2")
 
     elif periodo == 'Série completa':
-        fig.update_xaxes(
-            tickformat="%Y",
-            dtick="M12"
-        )
+        fig.update_xaxes(tickformat="%Y", dtick="M12")
 
-
-# ============================================================
-# HOVER
-# ============================================================
 
 def hover(nome):
     return f'{nome}: %{{y:.2f}} m<extra></extra>'
 
-
-# ============================================================
-# GRÁFICO
-# ============================================================
 
 def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
@@ -116,11 +124,9 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
     ocultar_percentis = periodo in ['12 meses', 'Série completa']
     mostrar_envelope = periodo not in ['12 meses', 'Série completa']
 
-    # quebra histórico onde não há observação
     cols_hist = ['minimo', 'p10', 'p50', 'p90', 'maximo']
     df_plot.loc[df_plot['nivel'].isna(), cols_hist] = pd.NA
 
-    # envelope apenas períodos curtos
     if mostrar_envelope:
 
         fig.add_trace(go.Scatter(
@@ -143,17 +149,12 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             hovertemplate=hover('Envelope histórico')
         ))
 
-    # P95 histórica
     fig.add_trace(go.Scatter(
         x=[df_plot['data'].min(), df_plot['data'].max()],
         y=[P95, P95],
         mode='lines',
         name='P95 histórica (série completa)',
-        line=dict(
-            color='red',
-            width=2,
-            dash='dot'
-        ),
+        line=dict(color='red', width=2, dash='dot'),
         hovertemplate=hover('P95 histórica')
     ))
 
@@ -188,7 +189,6 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             hovertemplate=hover(nome)
         ))
 
-    # eixo Y dinâmico
     if ocultar_percentis:
 
         y_max = max(
@@ -205,19 +205,13 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         height=700,
         hovermode='x unified',
         template='plotly_white',
-        xaxis=dict(
-            hoverformat="%d/%m/%Y"
-        )
+        xaxis=dict(hoverformat="%d/%m/%Y")
     )
 
     configurar_eixo_x(fig, periodo)
 
     return fig
 
-
-# ============================================================
-# APP
-# ============================================================
 
 st.title("Dashboard Hidrológico")
 
@@ -246,16 +240,12 @@ if arquivo:
 
     if periodo == '15 dias':
         inicio = ultima_data - pd.Timedelta(days=15)
-
     elif periodo == '1 mês':
         inicio = ultima_data - pd.DateOffset(months=1)
-
     elif periodo == '4 meses':
         inicio = ultima_data - pd.DateOffset(months=4)
-
     elif periodo == '12 meses':
         inicio = ultima_data - pd.DateOffset(years=1)
-
     else:
         inicio = nivel_diario['data'].min()
 
@@ -277,7 +267,67 @@ if arquivo:
         P95
     )
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
+    (
+        nivel_atual,
+        percentil,
+        variacao_m,
+        variacao_pct,
+        tendencia
+    ) = calcular_indicadores(nivel_diario)
+
+    col_graf, col_card = st.columns([5, 1])
+
+    with col_graf:
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col_card:
+
+        st.markdown(
+            f"""
+            <div style="
+                background-color:white;
+                border:1px solid #d9d9d9;
+                border-radius:12px;
+                padding:20px;
+                margin-top:120px;
+                box-shadow:0 2px 6px rgba(0,0,0,0.08);
+            ">
+
+            <h3 style="text-align:center;margin-top:0;">
+                Situação Atual
+            </h3>
+
+            <hr>
+
+            <b>Nível Atual</b><br>
+            <span style="font-size:30px;">
+                {nivel_atual:.2f} m
+            </span>
+
+            <br><br>
+
+            <b>Percentil Histórico</b><br>
+            <span style="font-size:26px;">
+                P{percentil}
+            </span>
+
+            <br><br>
+
+            <b>Variação (7 dias)</b><br>
+            <span style="font-size:22px;">
+                {variacao_m:+.2f} m
+            </span>
+            <br>
+            ({variacao_pct:+.1f}%)
+
+            <br><br>
+
+            <b>Tendência (7 dias)</b><br>
+            <span style="font-size:22px;">
+                {tendencia}
+            </span>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
