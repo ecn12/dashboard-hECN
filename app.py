@@ -10,6 +10,18 @@ st.title("Dashboard Hidrológico")
 
 st.markdown("### Monitoramento Hidrológico")
 
+import streamlit as st
+import pandas as pd
+
+st.set_page_config(
+    page_title="Dashboard Hidrológico",
+    layout="wide"
+)
+
+st.title("Dashboard Hidrológico")
+
+st.markdown("### Monitoramento Hidrológico")
+
 arquivo = st.file_uploader(
     "Upload CSV da estação",
     type=["csv"]
