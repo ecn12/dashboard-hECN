@@ -11,7 +11,22 @@ st.set_page_config(
 # PROCESSAMENTO
 # ============================================================
 
+# ============================================================
+# PROCESSAMENTO
+# ============================================================
+
 def processar_dados(df):
+
+    df.columns = ['estacao', 'datetime', 'chuva', 'nivel']
+
+    ...
+    return nome_estacao, P95, nivel_diario, estatisticas
+
+
+# ============================================================
+# INDICADORES
+# ============================================================
+
 def calcular_indicadores(nivel_diario):
 
     serie = nivel_diario['nivel'].dropna()
@@ -21,11 +36,13 @@ def calcular_indicadores(nivel_diario):
 
     nivel_atual = serie.iloc[-1]
 
-    # Percentil na lógica de permanência
-    percentil = ((serie >= nivel_atual).sum() / len(serie)) * 100
+    percentil = (
+        (serie >= nivel_atual).sum()
+        / len(serie)
+    ) * 100
+
     percentil = round(percentil)
 
-    # últimos 7 dias
     ultimos = serie.tail(8)
 
     if len(ultimos) >= 2:
@@ -325,7 +342,7 @@ if arquivo:
         P95
     )
 
-   (
+(
     nivel_atual,
     percentil,
     variacao_m,
