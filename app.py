@@ -2,10 +2,7 @@
 import pandas as pd
 import plotly.graph_objects as go
 
-st.set_page_config(
-    page_title="Dashboard Hidrológico",
-    layout="wide"
-)
+st.set_page_config(page_title="Dashboard Hidrológico", layout="wide")
 
 # ============================================================
 # PROCESSAMENTO
@@ -69,17 +66,33 @@ def calcular_indicadores(nivel_diario):
     serie = nivel_diario['nivel'].dropna()
 
     if len(serie) < 8:
-        return 0, 0, 0, 0, "→ Estável"
+        return 0, 0, 0, 0, 0, "→ Estável"
 
     nivel_atual = serie.iloc[-1]
 
-    percentil = ((serie >= nivel_atual).sum() / len(serie)) * 100
-    percentil = round(percentil)
+    # Percentil da série completa (lógica de permanência)
+    percentil_serie = round(
+        ((serie >= nivel_atual).sum() / len(serie)) * 100
+    )
+
+    # Percentil sazonal (mesmo dia do ano)
+    ultima_data = nivel_diario['data'].max()
+    mes_dia = ultima_data.strftime('%m-%d')
+
+    amostra_sazonal = nivel_diario[
+        nivel_diario['mes_dia'] == mes_dia
+    ]['nivel'].dropna()
+
+    if len(amostra_sazonal) > 0:
+        percentil_sazonal = round(
+            ((amostra_sazonal >= nivel_atual).sum() / len(amostra_sazonal)) * 100
+        )
+    else:
+        percentil_sazonal = 0
 
     nivel_7d = serie.iloc[-8]
 
     variacao_m = nivel_atual - nivel_7d
-
     variacao_pct = (variacao_m / nivel_7d) * 100
 
     if variacao_m > 0.05:
@@ -91,7 +104,8 @@ def calcular_indicadores(nivel_diario):
 
     return (
         nivel_atual,
-        percentil,
+        percentil_sazonal,
+        percentil_serie,
         variacao_m,
         variacao_pct,
         tendencia
@@ -222,11 +236,7 @@ arquivo = st.file_uploader(
 
 if arquivo:
 
-    df = pd.read_csv(
-        arquivo,
-        encoding='latin1',
-        sep=';'
-    )
+    df = pd.read_csv(arquivo, encoding='latin1', sep=';')
 
     nome_estacao, P95, nivel_diario, estatisticas = processar_dados(df)
 
@@ -269,13 +279,14 @@ if arquivo:
 
     (
         nivel_atual,
-        percentil,
+        percentil_sazonal,
+        percentil_serie,
         variacao_m,
         variacao_pct,
         tendencia
     ) = calcular_indicadores(nivel_diario)
 
-    col_graf, col_card = st.columns([5, 1])
+    col_graf, col_card = st.columns([4, 1.3])
 
     with col_graf:
         st.plotly_chart(fig, use_container_width=True)
@@ -288,8 +299,8 @@ if arquivo:
                 background-color:white;
                 border:1px solid #d9d9d9;
                 border-radius:12px;
-                padding:20px;
-                margin-top:120px;
+                padding:18px;
+                margin-top:60px;
                 box-shadow:0 2px 6px rgba(0,0,0,0.08);
             ">
 
@@ -300,32 +311,34 @@ if arquivo:
             <hr>
 
             <b>Nível Atual</b><br>
-            <span style="font-size:30px;">
+            <span style="font-size:28px;">
                 {nivel_atual:.2f} m
             </span>
 
-            <br><br>
+            <hr>
 
-            <b>Percentil Histórico</b><br>
-            <span style="font-size:26px;">
-                P{percentil}
+            <b>Percentil Sazonal</b><br>
+            <span style="font-size:24px;">
+                P{percentil_sazonal}
             </span>
 
-            <br><br>
+            <hr>
+
+            <b>Percentil Série</b><br>
+            <span style="font-size:24px;">
+                P{percentil_serie}
+            </span>
+
+            <hr>
 
             <b>Variação (7 dias)</b><br>
-            <span style="font-size:22px;">
-                {variacao_m:+.2f} m
-            </span>
-            <br>
+            {variacao_m:+.2f} m<br>
             ({variacao_pct:+.1f}%)
 
-            <br><br>
+            <hr>
 
             <b>Tendência (7 dias)</b><br>
-            <span style="font-size:22px;">
-                {tendencia}
-            </span>
+            {tendencia}
 
             </div>
             """,
