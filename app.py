@@ -12,6 +12,54 @@ st.set_page_config(
 # ============================================================
 
 def processar_dados(df):
+def calcular_indicadores(nivel_diario):
+
+    serie = nivel_diario['nivel'].dropna()
+
+    if len(serie) == 0:
+        return 0, 0, 0, 0, "→ Estável"
+
+    nivel_atual = serie.iloc[-1]
+
+    # Percentil na lógica de permanência
+    percentil = ((serie >= nivel_atual).sum() / len(serie)) * 100
+    percentil = round(percentil)
+
+    # últimos 7 dias
+    ultimos = serie.tail(8)
+
+    if len(ultimos) >= 2:
+
+        nivel_7d = ultimos.iloc[0]
+
+        variacao_m = nivel_atual - nivel_7d
+
+        variacao_pct = (
+            variacao_m / nivel_7d
+        ) * 100
+
+        if variacao_m > 0.05:
+            tendencia = "↑ Crescente"
+
+        elif variacao_m < -0.05:
+            tendencia = "↓ Decrescente"
+
+        else:
+            tendencia = "→ Estável"
+
+    else:
+
+        variacao_m = 0
+        variacao_pct = 0
+        tendencia = "→ Estável"
+
+    return (
+        nivel_atual,
+        percentil,
+        variacao_m,
+        variacao_pct,
+        tendencia
+    )
 
     df.columns = ['estacao', 'datetime', 'chuva', 'nivel']
 
@@ -277,7 +325,72 @@ if arquivo:
         P95
     )
 
+   (
+    nivel_atual,
+    percentil,
+    variacao_m,
+    variacao_pct,
+    tendencia
+) = calcular_indicadores(nivel_diario)
+
+col_graf, col_card = st.columns([4, 1])
+
+with col_graf:
+
     st.plotly_chart(
         fig,
         use_container_width=True
+    )
+
+with col_card:
+
+    st.markdown(
+        f"""
+        <div style="
+            background-color:white;
+            border:1px solid #d9d9d9;
+            border-radius:12px;
+            padding:20px;
+            margin-top:70px;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        ">
+
+        <h3 style="text-align:center;margin-top:0;">
+            Situação Atual
+        </h3>
+
+        <hr>
+
+        <p>
+            <b>Nível Atual</b><br>
+            <span style="font-size:30px;">
+                {nivel_atual:.2f} m
+            </span>
+        </p>
+
+        <p>
+            <b>Percentil Histórico</b><br>
+            <span style="font-size:24px;">
+                P{percentil}
+            </span>
+        </p>
+
+        <p>
+            <b>Variação (7 dias)</b><br>
+            <span style="font-size:22px;">
+                {variacao_m:+.2f} m
+            </span><br>
+            ({variacao_pct:+.1f}%)
+        </p>
+
+        <p>
+            <b>Tendência (7 dias)</b><br>
+            <span style="font-size:22px;">
+                {tendencia}
+            </span>
+        </p>
+
+        </div>
+        """,
+        unsafe_allow_html=True
     )
