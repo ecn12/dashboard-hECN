@@ -1,5 +1,5 @@
 import streamlit as st
 
-st.title("TESTE HOME")
+st.title("HOME")
 
-st.write("APP PRINCIPAL")
+st.write("Página inicial")
