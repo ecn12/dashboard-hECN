@@ -1,5 +1,18 @@
 import streamlit as st
 
-st.title("HOME")
+pagina = st.sidebar.radio(
+    "Navegação",
+    ["Home", "Quizanga"]
+)
 
-st.write("Página inicial")
+if pagina == "Home":
+
+    st.title("Dashboard Hidrológico")
+
+    st.write("Página inicial")
+
+else:
+
+    st.title("Quizanga")
+
+    # aqui entra o dashboard atual
