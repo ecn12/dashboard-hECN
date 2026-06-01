@@ -143,26 +143,29 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
     if mostrar_envelope:
 
-        fig.add_trace(go.Scatter(
-            x=df_plot['data'],
-            y=df_plot['minimo'],
-            line=dict(width=0),
-            showlegend=False,
-            connectgaps=False,
-            hoverinfo='skip'
-        ))
+       fig.add_trace(go.Scatter(
+    x=df_plot['data'],
+    y=df_plot['minimo'],
+    mode='lines',
+    line=dict(width=0),
+    marker=dict(size=0),
+    showlegend=False,
+    connectgaps=False,
+    hoverinfo='skip'
+))
 
-        fig.add_trace(go.Scatter(
-            x=df_plot['data'],
-            y=df_plot['maximo'],
-            fill='tonexty',
-            fillcolor='rgba(176,196,222,0.20)',
-            line=dict(width=0),
-            name='Envelope histórico',
-            connectgaps=False,
-            hovertemplate=hover('Envelope histórico')
-        ))
-
+fig.add_trace(go.Scatter(
+    x=df_plot['data'],
+    y=df_plot['maximo'],
+    mode='lines',
+    fill='tonexty',
+    fillcolor='rgba(176,196,222,0.20)',
+    line=dict(width=0),
+    marker=dict(size=0),
+    name='Envelope histórico',
+    connectgaps=False,
+    hovertemplate=hover('Envelope histórico')
+))
     fig.add_trace(go.Scatter(
         x=[df_plot['data'].min(), df_plot['data'].max()],
         y=[P95, P95],
