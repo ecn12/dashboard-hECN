@@ -495,4 +495,3 @@ if arquivo:
         fig_contexto,
         use_container_width=True
     )
-```
