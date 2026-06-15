@@ -48,27 +48,27 @@ def processar_dados(df):
     nivel_diario = nivel_diario.reset_index()
     nivel_diario.columns = ['data', 'nivel']
 
-    nivel_diario['mes_dia'] = nivel_diario['data'].dt.strftime('%m-%d')
+       nivel_diario['mes_dia'] = nivel_diario['data'].dt.strftime('%m-%d')
 
-estatisticas = nivel_diario.groupby('mes_dia')['nivel'].agg([
-    ('minimo', 'min'),
-    ('p10', lambda x: x.quantile(0.90)),
-    ('p50', lambda x: x.quantile(0.50)),
-    ('p90', lambda x: x.quantile(0.10)),
-    ('maximo', 'max'),
-    ('media', 'mean'),
-    ('desvio_padrao', 'std')
-]).reset_index()
+    estatisticas = nivel_diario.groupby('mes_dia')['nivel'].agg([
+        ('minimo', 'min'),
+        ('p10', lambda x: x.quantile(0.90)),
+        ('p50', lambda x: x.quantile(0.50)),
+        ('p90', lambda x: x.quantile(0.10)),
+        ('maximo', 'max'),
+        ('media', 'mean'),
+        ('desvio_padrao', 'std')
+    ]).reset_index()
 
-estatisticas['limite_superior'] = (
-    estatisticas['media'] +
-    estatisticas['desvio_padrao']
-)
+    estatisticas['limite_superior'] = (
+        estatisticas['media'] +
+        estatisticas['desvio_padrao']
+    )
 
-estatisticas['limite_inferior'] = (
-    estatisticas['media'] -
-    estatisticas['desvio_padrao']
-)
+    estatisticas['limite_inferior'] = (
+        estatisticas['media'] -
+        estatisticas['desvio_padrao']
+    )
 
     return nome_estacao, P95, nivel_diario, estatisticas
 
