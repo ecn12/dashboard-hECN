@@ -1,13 +1,8 @@
-```python
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import numpy as np
 
-st.set_page_config(
-    page_title="Dashboard Hidrológico",
-    layout="wide"
-)
+st.set_page_config(page_title="Dashboard Hidrológico", layout="wide")
 
 # ============================================================
 # PROCESSAMENTO
@@ -56,20 +51,8 @@ def processar_dados(df):
         ('p10', lambda x: x.quantile(0.90)),
         ('p50', lambda x: x.quantile(0.50)),
         ('p90', lambda x: x.quantile(0.10)),
-        ('maximo', 'max'),
-        ('media', 'mean'),
-        ('desvio_padrao', 'std')
+        ('maximo', 'max')
     ]).reset_index()
-
-    estatisticas['limite_superior'] = (
-        estatisticas['media'] +
-        estatisticas['desvio_padrao']
-    )
-
-    estatisticas['limite_inferior'] = (
-        estatisticas['media'] -
-        estatisticas['desvio_padrao']
-    )
 
     return nome_estacao, P95, nivel_diario, estatisticas
 
@@ -87,10 +70,12 @@ def calcular_indicadores(nivel_diario):
 
     nivel_atual = serie.iloc[-1]
 
+    # Percentil da série completa (lógica de permanência)
     percentil_serie = round(
         ((serie >= nivel_atual).sum() / len(serie)) * 100
     )
 
+    # Percentil sazonal (mesmo dia do ano)
     ultima_data = nivel_diario['data'].max()
     mes_dia = ultima_data.strftime('%m-%d')
 
@@ -146,10 +131,6 @@ def hover(nome):
     return f'{nome}: %{{y:.2f}} m<extra></extra>'
 
 
-# ============================================================
-# GRÁFICO PRINCIPAL
-# ============================================================
-
 def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
     fig = go.Figure()
@@ -167,6 +148,7 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             y=df_plot['minimo'],
             mode='lines',
             line=dict(width=0),
+            marker=dict(size=0),
             showlegend=False,
             connectgaps=False,
             hoverinfo='skip'
@@ -179,9 +161,10 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             fill='tonexty',
             fillcolor='rgba(176,196,222,0.20)',
             line=dict(width=0),
+            marker=dict(size=0),
             name='Envelope histórico',
             connectgaps=False,
-            hoverinfo='skip'
+            hovertemplate=hover('Envelope histórico')
         ))
 
     fig.add_trace(go.Scatter(
@@ -189,7 +172,8 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         y=[P95, P95],
         mode='lines',
         name='P95 histórica (série completa)',
-        line=dict(color='red', width=2, dash='dot')
+        line=dict(color='red', width=2, dash='dot'),
+        hovertemplate=hover('P95 histórica')
     ))
 
     series = {
@@ -223,16 +207,144 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             hovertemplate=hover(nome)
         ))
 
+    if ocultar_percentis:
+
+        y_max = max(
+            df_plot['nivel'].dropna().max(),
+            P95
+        ) * 1.10
+
+        fig.update_yaxes(range=[0, y_max])
+
     fig.update_layout(
         title=f'{nome_estacao} - {periodo}',
         xaxis_title='Data',
         yaxis_title='Nível (m)',
         height=700,
         hovermode='x unified',
-        template='plotly_white'
+        template='plotly_white',
+        xaxis=dict(hoverformat="%d/%m/%Y")
     )
 
     configurar_eixo_x(fig, periodo)
 
     return fig
-```
+
+
+st.title("Dashboard Hidrológico")
+
+arquivo = st.file_uploader(
+    "Upload CSV da estação",
+    type=['csv']
+)
+
+if arquivo:
+
+    df = pd.read_csv(arquivo, encoding='latin1', sep=';')
+
+    nome_estacao, P95, nivel_diario, estatisticas = processar_dados(df)
+
+    periodo = st.radio(
+        "Selecione o período",
+        ['15 dias', '1 mês', '4 meses', '12 meses', 'Série completa'],
+        horizontal=True
+    )
+
+    ultima_data = nivel_diario['data'].max()
+
+    if periodo == '15 dias':
+        inicio = ultima_data - pd.Timedelta(days=15)
+    elif periodo == '1 mês':
+        inicio = ultima_data - pd.DateOffset(months=1)
+    elif periodo == '4 meses':
+        inicio = ultima_data - pd.DateOffset(months=4)
+    elif periodo == '12 meses':
+        inicio = ultima_data - pd.DateOffset(years=1)
+    else:
+        inicio = nivel_diario['data'].min()
+
+    observado = nivel_diario[
+        (nivel_diario['data'] >= inicio) &
+        (nivel_diario['data'] <= ultima_data)
+    ]
+
+    grafico = observado.merge(
+        estatisticas,
+        on='mes_dia',
+        how='left'
+    )
+
+    fig = gerar_grafico(
+        grafico,
+        nome_estacao,
+        periodo,
+        P95
+    )
+
+    (
+        nivel_atual,
+        percentil_sazonal,
+        percentil_serie,
+        variacao_m,
+        variacao_pct,
+        tendencia
+    ) = calcular_indicadores(nivel_diario)
+
+    col_graf, col_card = st.columns([4, 1.3])
+
+    with col_graf:
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col_card:
+
+        st.markdown(
+            f"""
+            <div style="
+                background-color:white;
+                border:1px solid #d9d9d9;
+                border-radius:12px;
+                padding:18px;
+                margin-top:60px;
+                box-shadow:0 2px 6px rgba(0,0,0,0.08);
+            ">
+
+            <h3 style="text-align:center;margin-top:0;">
+                Situação Atual
+            </h3>
+
+            <hr>
+
+            <b>Nível Atual</b><br>
+            <span style="font-size:28px;">
+                {nivel_atual:.2f} m
+            </span>
+
+            <hr>
+
+            <b>Percentil Sazonal</b><br>
+            <span style="font-size:24px;">
+                P{percentil_sazonal}
+            </span>
+
+            <hr>
+
+            <b>Percentil Série</b><br>
+            <span style="font-size:24px;">
+                P{percentil_serie}
+            </span>
+
+            <hr>
+
+            <b>Variação (7 dias)</b><br>
+            {variacao_m:+.2f} m<br>
+            ({variacao_pct:+.1f}%)
+
+            <hr>
+
+            <b>Tendência (7 dias)</b><br>
+            {tendencia}
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
