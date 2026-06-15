@@ -63,12 +63,12 @@ def processar_dados(df):
     estatisticas['limite_superior'] = (
         estatisticas['media'] +
         estatisticas['desvio_padrao']
-    )
+    ).rolling(7, center=True, min_periods=1).mean().round(2)
 
     estatisticas['limite_inferior'] = (
         estatisticas['media'] -
         estatisticas['desvio_padrao']
-    )
+    ).rolling(7, center=True, min_periods=1).mean().round(2)
 
     return nome_estacao, P95, nivel_diario, estatisticas
 
@@ -257,10 +257,29 @@ def gerar_grafico_contexto(
     nivel_diario,
     estatisticas,
     P95,
-    nome_estacao
+    nome_estacao,
+    periodo_contexto
 ):
 
-    contexto = nivel_diario.dropna(subset=['nivel']).tail(15).copy()
+    contexto = nivel_diario.dropna(subset=['nivel']).copy()
+
+    ultima_data = contexto['data'].max()
+
+    if periodo_contexto == '15 dias':
+        inicio = ultima_data - pd.Timedelta(days=15)
+    elif periodo_contexto == '1 mês':
+        inicio = ultima_data - pd.DateOffset(months=1)
+    elif periodo_contexto == '4 meses':
+        inicio = ultima_data - pd.DateOffset(months=4)
+    elif periodo_contexto == '12 meses':
+        inicio = ultima_data - pd.DateOffset(years=1)
+    else:
+        inicio = contexto['data'].min()
+
+    contexto = contexto[
+        (contexto['data'] >= inicio) &
+        (contexto['data'] <= ultima_data)
+    ].copy()
 
     contexto = contexto.merge(
         estatisticas[
@@ -339,7 +358,7 @@ def gerar_grafico_contexto(
     ))
 
     fig.update_layout(
-        title=f'{nome_estacao} - Contexto Hidrológico Sazonal',
+        title=f'{nome_estacao} - Contexto Hidrológico Sazonal ({periodo_contexto})',
         xaxis_title='Data',
         yaxis_title='Nível (m)',
         height=550,
@@ -413,11 +432,21 @@ if arquivo:
         P95
     )
 
+    st.markdown("---")
+
+    periodo_contexto = st.radio(
+        "Período do contexto hidrológico",
+        ['15 dias', '1 mês', '4 meses', '12 meses', 'Série completa'],
+        horizontal=True,
+        key='periodo_contexto'
+    )
+
     fig_contexto = gerar_grafico_contexto(
         nivel_diario,
         estatisticas,
         P95,
-        nome_estacao
+        nome_estacao,
+        periodo_contexto
     )
 
     (
