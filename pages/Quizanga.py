@@ -48,7 +48,7 @@ def processar_dados(df):
     nivel_diario = nivel_diario.reset_index()
     nivel_diario.columns = ['data', 'nivel']
 
-       nivel_diario['mes_dia'] = nivel_diario['data'].dt.strftime('%m-%d')
+    nivel_diario['mes_dia'] = nivel_diario['data'].dt.strftime('%m-%d')
 
     estatisticas = nivel_diario.groupby('mes_dia')['nivel'].agg([
         ('minimo', 'min'),
