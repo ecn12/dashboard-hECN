@@ -2,7 +2,10 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Dashboard Hidrológico", layout="wide")
+st.set_page_config(
+    page_title="Dashboard Hidrológico",
+    layout="wide"
+)
 
 # ============================================================
 # PROCESSAMENTO
@@ -70,12 +73,10 @@ def calcular_indicadores(nivel_diario):
 
     nivel_atual = serie.iloc[-1]
 
-    # Percentil da série completa (lógica de permanência)
     percentil_serie = round(
         ((serie >= nivel_atual).sum() / len(serie)) * 100
     )
 
-    # Percentil sazonal (mesmo dia do ano)
     ultima_data = nivel_diario['data'].max()
     mes_dia = ultima_data.strftime('%m-%d')
 
@@ -131,6 +132,10 @@ def hover(nome):
     return f'{nome}: %{{y:.2f}} m<extra></extra>'
 
 
+# ============================================================
+# GRÁFICO PRINCIPAL
+# ============================================================
+
 def gerar_grafico(df_plot, nome_estacao, periodo, P95):
 
     fig = go.Figure()
@@ -148,7 +153,6 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             y=df_plot['minimo'],
             mode='lines',
             line=dict(width=0),
-            marker=dict(size=0),
             showlegend=False,
             connectgaps=False,
             hoverinfo='skip'
@@ -161,10 +165,9 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             fill='tonexty',
             fillcolor='rgba(176,196,222,0.20)',
             line=dict(width=0),
-            marker=dict(size=0),
             name='Envelope histórico',
             connectgaps=False,
-            hovertemplate=hover('Envelope histórico')
+            hoverinfo='skip'
         ))
 
     fig.add_trace(go.Scatter(
@@ -172,8 +175,7 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
         y=[P95, P95],
         mode='lines',
         name='P95 histórica (série completa)',
-        line=dict(color='red', width=2, dash='dot'),
-        hovertemplate=hover('P95 histórica')
+        line=dict(color='red', width=2, dash='dot')
     ))
 
     series = {
@@ -207,29 +209,23 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
             hovertemplate=hover(nome)
         ))
 
-    if ocultar_percentis:
-
-        y_max = max(
-            df_plot['nivel'].dropna().max(),
-            P95
-        ) * 1.10
-
-        fig.update_yaxes(range=[0, y_max])
-
     fig.update_layout(
         title=f'{nome_estacao} - {periodo}',
         xaxis_title='Data',
         yaxis_title='Nível (m)',
         height=700,
         hovermode='x unified',
-        template='plotly_white',
-        xaxis=dict(hoverformat="%d/%m/%Y")
+        template='plotly_white'
     )
 
     configurar_eixo_x(fig, periodo)
 
     return fig
 
+
+# ============================================================
+# APP
+# ============================================================
 
 st.title("Dashboard Hidrológico")
 
@@ -240,7 +236,11 @@ arquivo = st.file_uploader(
 
 if arquivo:
 
-    df = pd.read_csv(arquivo, encoding='latin1', sep=';')
+    df = pd.read_csv(
+        arquivo,
+        encoding='latin1',
+        sep=';'
+    )
 
     nome_estacao, P95, nivel_diario, estatisticas = processar_dados(df)
 
@@ -254,12 +254,16 @@ if arquivo:
 
     if periodo == '15 dias':
         inicio = ultima_data - pd.Timedelta(days=15)
+
     elif periodo == '1 mês':
         inicio = ultima_data - pd.DateOffset(months=1)
+
     elif periodo == '4 meses':
         inicio = ultima_data - pd.DateOffset(months=4)
+
     elif periodo == '12 meses':
         inicio = ultima_data - pd.DateOffset(years=1)
+
     else:
         inicio = nivel_diario['data'].min()
 
@@ -297,17 +301,30 @@ if arquivo:
 
     with col_card:
 
-        st.markdown(
-            f"""
-            <div style="
-                background-color:white;
-                border:1px solid #d9d9d9;
-                border-radius:12px;
-                padding:18px;
-                margin-top:60px;
-                box-shadow:0 2px 6px rgba(0,0,0,0.08);
-            ">
+        st.subheader("Situação Atual")
 
-            <h3 style="text-align:center;margin-top:0;">
-     
-```
+        st.metric(
+            "Nível Atual",
+            f"{nivel_atual:.2f} m"
+        )
+
+        st.metric(
+            "Percentil Sazonal",
+            f"P{percentil_sazonal}"
+        )
+
+        st.metric(
+            "Percentil Série",
+            f"P{percentil_serie}"
+        )
+
+        st.metric(
+            "Variação (7 dias)",
+            f"{variacao_m:.2f} m",
+            delta=f"{variacao_pct:.1f}%"
+        )
+
+        st.metric(
+            "Tendência",
+            tendencia
+        )
