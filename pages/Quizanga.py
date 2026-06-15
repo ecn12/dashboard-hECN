@@ -309,42 +309,5 @@ if arquivo:
             ">
 
             <h3 style="text-align:center;margin-top:0;">
-                Situação Atual
-            </h3>
-
-            <hr>
-
-            <b>Nível Atual</b><br>
-            <span style="font-size:28px;">
-                {nivel_atual:.2f} m
-            </span>
-
-            <hr>
-
-            <b>Percentil Sazonal</b><br>
-            <span style="font-size:24px;">
-                P{percentil_sazonal}
-            </span>
-
-            <hr>
-
-            <b>Percentil Série</b><br>
-            <span style="font-size:24px;">
-                P{percentil_serie}
-            </span>
-
-            <hr>
-
-            <b>Variação (7 dias)</b><br>
-            {variacao_m:+.2f} m<br>
-            ({variacao_pct:+.1f}%)
-
-            <hr>
-
-            <b>Tendência (7 dias)</b><br>
-            {tendencia}
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+     
+```
