@@ -459,7 +459,7 @@ if arquivo:
     variacao_m,
     variacao_pct,
     tendencia
-) = calcular_indicadores(nivel_diario)
+    ) = calcular_indicadores(nivel_diario)
 
 col_graf, col_card = st.columns([4, 1.3])
 
