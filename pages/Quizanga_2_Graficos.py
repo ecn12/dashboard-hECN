@@ -405,7 +405,7 @@ arquivo = st.file_uploader(
     type=['csv']
 )
 
-    if arquivo:
+if arquivo:
 
     df = pd.read_csv(
         arquivo,
@@ -425,12 +425,16 @@ arquivo = st.file_uploader(
 
     if periodo == '15 dias':
         inicio = ultima_data - pd.Timedelta(days=15)
+
     elif periodo == '1 mês':
         inicio = ultima_data - pd.DateOffset(months=1)
+
     elif periodo == '4 meses':
         inicio = ultima_data - pd.DateOffset(months=4)
+
     elif periodo == '12 meses':
         inicio = ultima_data - pd.DateOffset(years=1)
+
     else:
         inicio = nivel_diario['data'].min()
 
@@ -446,98 +450,98 @@ arquivo = st.file_uploader(
     )
 
     fig = gerar_grafico(
-    grafico,
-    nome_estacao,
-    periodo,
-    P95
+        grafico,
+        nome_estacao,
+        periodo,
+        P95
     )
 
-(
-    nivel_atual,
-    percentil_sazonal,
-    percentil_serie,
-    variacao_m,
-    variacao_pct,
-    tendencia
-) = calcular_indicadores(nivel_diario)
+    (
+        nivel_atual,
+        percentil_sazonal,
+        percentil_serie,
+        variacao_m,
+        variacao_pct,
+        tendencia
+    ) = calcular_indicadores(nivel_diario)
 
-col_graf, col_card = st.columns([4, 1.3])
+    col_graf, col_card = st.columns([4, 1.3])
 
-with col_graf:
-    st.plotly_chart(fig, use_container_width=True)
+    with col_graf:
+        st.plotly_chart(fig, use_container_width=True)
 
-with col_card:
+    with col_card:
 
-    st.markdown(
-        f"""
-        <div style="
-            background-color:white;
-            border:1px solid #d9d9d9;
-            border-radius:12px;
-            padding:18px;
-            margin-top:60px;
-            box-shadow:0 2px 6px rgba(0,0,0,0.08);
-        ">
+        st.markdown(
+            f"""
+            <div style="
+                background-color:white;
+                border:1px solid #d9d9d9;
+                border-radius:12px;
+                padding:18px;
+                margin-top:60px;
+                box-shadow:0 2px 6px rgba(0,0,0,0.08);
+            ">
 
-        <h3 style="text-align:center;margin-top:0;">
-            Situação Atual
-        </h3>
+            <h3 style="text-align:center;margin-top:0;">
+                Situação Atual
+            </h3>
 
-        <hr>
+            <hr>
 
-        <b>Nível Atual</b><br>
-        <span style="font-size:28px;">
-            {nivel_atual:.2f} m
-        </span>
+            <b>Nível Atual</b><br>
+            <span style="font-size:28px;">
+                {nivel_atual:.2f} m
+            </span>
 
-        <hr>
+            <hr>
 
-        <b>Percentil Sazonal</b><br>
-        <span style="font-size:24px;">
-            P{percentil_sazonal}
-        </span>
+            <b>Percentil Sazonal</b><br>
+            <span style="font-size:24px;">
+                P{percentil_sazonal}
+            </span>
 
-        <hr>
+            <hr>
 
-        <b>Percentil Série</b><br>
-        <span style="font-size:24px;">
-            P{percentil_serie}
-        </span>
+            <b>Percentil Série</b><br>
+            <span style="font-size:24px;">
+                P{percentil_serie}
+            </span>
 
-        <hr>
+            <hr>
 
-        <b>Variação (7 dias)</b><br>
-        {variacao_m:+.2f} m<br>
-        ({variacao_pct:+.1f}%)
+            <b>Variação (7 dias)</b><br>
+            {variacao_m:+.2f} m<br>
+            ({variacao_pct:+.1f}%)
 
-        <hr>
+            <hr>
 
-        <b>Tendência (7 dias)</b><br>
-        {tendencia}
+            <b>Tendência (7 dias)</b><br>
+            {tendencia}
 
-        </div>
-        """,
-        unsafe_allow_html=True
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    st.markdown("---")
+
+    periodo_contexto = st.radio(
+        "Período do contexto hidrológico",
+        ['15 dias', '1 mês', '4 meses', '12 meses', 'Série completa'],
+        horizontal=True,
+        key='periodo_contexto'
     )
 
-st.markdown("---")
+    fig_contexto = gerar_grafico_contexto(
+        nivel_diario,
+        estatisticas,
+        P95,
+        nome_estacao,
+        periodo_contexto
+    )
 
-periodo_contexto = st.radio(
-    "Período do contexto hidrológico",
-    ['15 dias', '1 mês', '4 meses', '12 meses', 'Série completa'],
-    horizontal=True,
-    key='periodo_contexto'
-)
-
-fig_contexto = gerar_grafico_contexto(
-    nivel_diario,
-    estatisticas,
-    P95,
-    nome_estacao,
-    periodo_contexto
-)
-
-st.plotly_chart(
-    fig_contexto,
-    use_container_width=True
-)
+    st.plotly_chart(
+        fig_contexto,
+        use_container_width=True
+    )
