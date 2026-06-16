@@ -371,14 +371,16 @@ def gerar_grafico_contexto(
     ))
 
     fig.add_trace(go.Scatter(
-        x=contexto['data'],
-        y=contexto['nivel'],
-        mode='lines+markers',
-        name='Nível observado',
-        line=dict(
-            color='royalblue',
-            width=4
-        )
+    x=contexto['data'],
+    y=contexto['nivel'],
+    mode='lines',
+    name='Nível observado',
+    line=dict(
+        color='royalblue',
+        width=4
+    ),
+    connectgaps=False,
+    hovertemplate=hover('Nível observado')
     ))
 
     fig.update_layout(
