@@ -432,23 +432,6 @@ if arquivo:
         P95
     )
 
-    st.markdown("---")
-
-    periodo_contexto = st.radio(
-        "Período do contexto hidrológico",
-        ['15 dias', '1 mês', '4 meses', '12 meses', 'Série completa'],
-        horizontal=True,
-        key='periodo_contexto'
-    )
-
-    fig_contexto = gerar_grafico_contexto(
-        nivel_diario,
-        estatisticas,
-        P95,
-        nome_estacao,
-        periodo_contexto
-    )
-
     (
         nivel_atual,
         percentil_sazonal,
@@ -518,6 +501,34 @@ if arquivo:
         )
 
     st.markdown("---")
+
+    st.plotly_chart(
+        fig_contexto,
+        use_container_width=True
+    )
+
+        st.markdown(
+            f"""
+            ...
+            """,
+            unsafe_allow_html=True
+        )
+    st.markdown("---")
+
+    periodo_contexto = st.radio(
+        "Período do contexto hidrológico",
+        ['15 dias', '1 mês', '4 meses', '12 meses', 'Série completa'],
+        horizontal=True,
+        key='periodo_contexto'
+    )
+
+    fig_contexto = gerar_grafico_contexto(
+        nivel_diario,
+        estatisticas,
+        P95,
+        nome_estacao,
+        periodo_contexto
+    )
 
     st.plotly_chart(
         fig_contexto,
