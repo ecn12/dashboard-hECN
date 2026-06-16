@@ -445,7 +445,7 @@ if arquivo:
         how='left'
     )
 
-fig = gerar_grafico(
+    fig = gerar_grafico(
     grafico,
     nome_estacao,
     periodo,
