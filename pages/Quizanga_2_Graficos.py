@@ -267,12 +267,16 @@ def gerar_grafico_contexto(
 
     if periodo_contexto == '15 dias':
         inicio = ultima_data - pd.Timedelta(days=15)
+
     elif periodo_contexto == '1 mês':
         inicio = ultima_data - pd.DateOffset(months=1)
+
     elif periodo_contexto == '4 meses':
         inicio = ultima_data - pd.DateOffset(months=4)
+
     elif periodo_contexto == '12 meses':
         inicio = ultima_data - pd.DateOffset(years=1)
+
     else:
         inicio = contexto['data'].min()
 
@@ -287,9 +291,9 @@ def gerar_grafico_contexto(
                 'mes_dia',
                 'minimo',
                 'maximo',
+                'p10',
                 'p50',
-                'limite_superior',
-                'limite_inferior'
+                'p90'
             ]
         ],
         on='mes_dia',
@@ -300,7 +304,7 @@ def gerar_grafico_contexto(
 
     fig.add_trace(go.Scatter(
         x=contexto['data'],
-        y=contexto['limite_inferior'],
+        y=contexto['p90'],
         mode='lines',
         line=dict(width=0),
         showlegend=False,
@@ -309,12 +313,13 @@ def gerar_grafico_contexto(
 
     fig.add_trace(go.Scatter(
         x=contexto['data'],
-        y=contexto['limite_superior'],
+        y=contexto['p10'],
         mode='lines',
         fill='tonexty',
         fillcolor='rgba(100,180,100,0.20)',
         line=dict(width=0),
-        name='Faixa de normalidade (±1σ)'
+        name='Faixa de normalidade (P10–P90)',
+        hoverinfo='skip'
     ))
 
     fig.add_trace(go.Scatter(
@@ -322,7 +327,11 @@ def gerar_grafico_contexto(
         y=contexto['p50'],
         mode='lines',
         name='P50 sazonal',
-        line=dict(color='#9BC59D', width=2, dash='dash')
+        line=dict(
+            color='#9BC59D',
+            width=2,
+            dash='dash'
+        )
     ))
 
     fig.add_trace(go.Scatter(
@@ -330,7 +339,11 @@ def gerar_grafico_contexto(
         y=contexto['maximo'],
         mode='lines',
         name='Máximo histórico',
-        line=dict(color='#B08D57', width=2, dash='dash')
+        line=dict(
+            color='#B08D57',
+            width=2,
+            dash='dash'
+        )
     ))
 
     fig.add_trace(go.Scatter(
@@ -338,7 +351,11 @@ def gerar_grafico_contexto(
         y=contexto['minimo'],
         mode='lines',
         name='Mínimo histórico',
-        line=dict(color='#C7B3D8', width=2, dash='dash')
+        line=dict(
+            color='#C7B3D8',
+            width=2,
+            dash='dash'
+        )
     ))
 
     fig.add_trace(go.Scatter(
@@ -346,7 +363,11 @@ def gerar_grafico_contexto(
         y=[P95] * len(contexto),
         mode='lines',
         name='Q95 histórica',
-        line=dict(color='red', width=2, dash='dot')
+        line=dict(
+            color='red',
+            width=2,
+            dash='dot'
+        )
     ))
 
     fig.add_trace(go.Scatter(
@@ -354,7 +375,10 @@ def gerar_grafico_contexto(
         y=contexto['nivel'],
         mode='lines+markers',
         name='Nível observado',
-        line=dict(color='royalblue', width=4)
+        line=dict(
+            color='royalblue',
+            width=4
+        )
     ))
 
     fig.update_layout(
@@ -366,13 +390,9 @@ def gerar_grafico_contexto(
         template='plotly_white'
     )
 
-    fig.update_xaxes(
-        tickformat='%d/%m',
-        dtick='D1'
-    )
+    configurar_eixo_x(fig, periodo_contexto)
 
     return fig
-
 
 # ============================================================
 # APP
@@ -425,101 +445,100 @@ if arquivo:
         how='left'
     )
 
-    fig = gerar_grafico(
-        grafico,
-        nome_estacao,
-        periodo,
-        P95
+```
+fig = gerar_grafico(
+    grafico,
+    nome_estacao,
+    periodo,
+    P95
+)
+
+(
+    nivel_atual,
+    percentil_sazonal,
+    percentil_serie,
+    variacao_m,
+    variacao_pct,
+    tendencia
+) = calcular_indicadores(nivel_diario)
+
+col_graf, col_card = st.columns([4, 1.3])
+
+with col_graf:
+    st.plotly_chart(fig, use_container_width=True)
+
+with col_card:
+
+    st.markdown(
+        f"""
+        <div style="
+            background-color:white;
+            border:1px solid #d9d9d9;
+            border-radius:12px;
+            padding:18px;
+            margin-top:60px;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        ">
+
+        <h3 style="text-align:center;margin-top:0;">
+            Situação Atual
+        </h3>
+
+        <hr>
+
+        <b>Nível Atual</b><br>
+        <span style="font-size:28px;">
+            {nivel_atual:.2f} m
+        </span>
+
+        <hr>
+
+        <b>Percentil Sazonal</b><br>
+        <span style="font-size:24px;">
+            P{percentil_sazonal}
+        </span>
+
+        <hr>
+
+        <b>Percentil Série</b><br>
+        <span style="font-size:24px;">
+            P{percentil_serie}
+        </span>
+
+        <hr>
+
+        <b>Variação (7 dias)</b><br>
+        {variacao_m:+.2f} m<br>
+        ({variacao_pct:+.1f}%)
+
+        <hr>
+
+        <b>Tendência (7 dias)</b><br>
+        {tendencia}
+
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
-    st.markdown("---")
+st.markdown("---")
 
-    periodo_contexto = st.radio(
-        "Período do contexto hidrológico",
-        ['15 dias', '1 mês', '4 meses', '12 meses', 'Série completa'],
-        horizontal=True,
-        key='periodo_contexto'
-    )
+periodo_contexto = st.radio(
+    "Período do contexto hidrológico",
+    ['15 dias', '1 mês', '4 meses', '12 meses', 'Série completa'],
+    horizontal=True,
+    key='periodo_contexto'
+)
 
-    fig_contexto = gerar_grafico_contexto(
-        nivel_diario,
-        estatisticas,
-        P95,
-        nome_estacao,
-        periodo_contexto
-    )
+fig_contexto = gerar_grafico_contexto(
+    nivel_diario,
+    estatisticas,
+    P95,
+    nome_estacao,
+    periodo_contexto
+)
 
-    (
-        nivel_atual,
-        percentil_sazonal,
-        percentil_serie,
-        variacao_m,
-        variacao_pct,
-        tendencia
-    ) = calcular_indicadores(nivel_diario)
-
-    col_graf, col_card = st.columns([4, 1.3])
-
-    with col_graf:
-        st.plotly_chart(fig, use_container_width=True)
-
-    with col_card:
-
-        st.markdown(
-            f"""
-            <div style="
-                background-color:white;
-                border:1px solid #d9d9d9;
-                border-radius:12px;
-                padding:18px;
-                margin-top:60px;
-                box-shadow:0 2px 6px rgba(0,0,0,0.08);
-            ">
-
-            <h3 style="text-align:center;margin-top:0;">
-                Situação Atual
-            </h3>
-
-            <hr>
-
-            <b>Nível Atual</b><br>
-            <span style="font-size:28px;">
-                {nivel_atual:.2f} m
-            </span>
-
-            <hr>
-
-            <b>Percentil Sazonal</b><br>
-            <span style="font-size:24px;">
-                P{percentil_sazonal}
-            </span>
-
-            <hr>
-
-            <b>Percentil Série</b><br>
-            <span style="font-size:24px;">
-                P{percentil_serie}
-            </span>
-
-            <hr>
-
-            <b>Variação (7 dias)</b><br>
-            {variacao_m:+.2f} m<br>
-            ({variacao_pct:+.1f}%)
-
-            <hr>
-
-            <b>Tendência (7 dias)</b><br>
-            {tendencia}
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    st.markdown("---")
-
-    st.plotly_chart(
-        fig_contexto,
-        use_container_width=True
-    )
+st.plotly_chart(
+    fig_contexto,
+    use_container_width=True
+)
