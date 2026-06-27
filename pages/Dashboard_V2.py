@@ -64,6 +64,27 @@ nome_estacao, P95, nivel_diario, estatisticas = processar_dados(df)
     tendencia
 ) = calcular_indicadores(nivel_diario)
 
+st.divider()
+
+periodo_contexto = st.radio(
+    "Selecione o período do Contexto Hidrológico",
+    ['15 dias', '1 mês', '4 meses', '12 meses', 'Série completa'],
+    horizontal=True,
+    key="contexto"
+)
+fig_contexto = gerar_grafico_contexto(
+    nivel_diario,
+    estatisticas,
+    P95,
+    nome_estacao,
+    periodo_contexto
+)
+
+st.plotly_chart(
+    fig_contexto,
+    use_container_width=True
+)
+
 # ===========================================
 # PERÍODO DO PRIMEIRO GRÁFICO
 # ===========================================
