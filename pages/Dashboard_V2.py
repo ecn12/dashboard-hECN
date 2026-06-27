@@ -1,6 +1,10 @@
 import streamlit as st
 import pandas as pd
 
+from utils.processamento import processar_dados
+import streamlit as st
+import pandas as pd
+
 st.set_page_config(
     page_title="Dashboard Hidrológico",
     layout="wide"
