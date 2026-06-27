@@ -7,6 +7,7 @@ from utils.graficos import (
     gerar_grafico,
     gerar_grafico_contexto
 )
+from utils.cards import mostrar_card
 
 st.set_page_config(
     page_title="Dashboard Hidrológico",
