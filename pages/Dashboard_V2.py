@@ -48,6 +48,10 @@ df = pd.read_csv(
     encoding="latin1"
 )
 
+nome_estacao, P95, nivel_diario, estatisticas = processar_dados(df)
+
+st.success(nome_estacao)
+
 st.subheader("Primeiras linhas do arquivo")
 
 st.dataframe(df.head())
