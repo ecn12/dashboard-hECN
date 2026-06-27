@@ -1,3 +1,6 @@
+import pandas as pd
+import plotly.graph_objects as go
+
 def configurar_eixo_x(fig, periodo):
 
     if periodo in ['15 dias', '1 mês']:
@@ -111,5 +114,148 @@ def gerar_grafico(df_plot, nome_estacao, periodo, P95):
     )
 
     configurar_eixo_x(fig, periodo)
+
+    return fig
+
+def gerar_grafico_contexto(
+    nivel_diario,
+    estatisticas,
+    P95,
+    nome_estacao,
+    periodo_contexto
+):
+
+    contexto = nivel_diario.dropna(subset=['nivel']).copy()
+
+    ultima_data = contexto['data'].max()
+
+    if periodo_contexto == '15 dias':
+        inicio = ultima_data - pd.Timedelta(days=15)
+
+    elif periodo_contexto == '1 mês':
+        inicio = ultima_data - pd.DateOffset(months=1)
+
+    elif periodo_contexto == '4 meses':
+        inicio = ultima_data - pd.DateOffset(months=4)
+
+    elif periodo_contexto == '12 meses':
+        inicio = ultima_data - pd.DateOffset(years=1)
+
+    else:
+        inicio = contexto['data'].min()
+
+    contexto = contexto[
+        (contexto['data'] >= inicio) &
+        (contexto['data'] <= ultima_data)
+    ].copy()
+
+    contexto = contexto.merge(
+        estatisticas[
+            [
+                'mes_dia',
+                'minimo',
+                'maximo',
+                'p10',
+                'p50',
+                'p90'
+            ]
+        ],
+        on='mes_dia',
+        how='left'
+    )
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=contexto['data'],
+        y=contexto['p90'],
+        mode='lines',
+        line=dict(width=0),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=contexto['data'],
+        y=contexto['p10'],
+        mode='lines',
+        fill='tonexty',
+        fillcolor='rgba(100,180,100,0.20)',
+        line=dict(width=0),
+        name='Faixa de normalidade (P10–P90)',
+        hoverinfo='skip'
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=contexto['data'],
+        y=contexto['p50'],
+        mode='lines',
+        name='P50 sazonal',
+        line=dict(
+            color='#9BC59D',
+            width=2,
+            dash='dash'
+        )
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=contexto['data'],
+        y=contexto['maximo'],
+        mode='lines',
+        name='Máximo histórico',
+        line=dict(
+            color='#B08D57',
+            width=2,
+            dash='dash'
+        )
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=contexto['data'],
+        y=contexto['minimo'],
+        mode='lines',
+        name='Mínimo histórico',
+        line=dict(
+            color='#C7B3D8',
+            width=2,
+            dash='dash'
+        )
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=contexto['data'],
+        y=[P95] * len(contexto),
+        mode='lines',
+        name='Q95 histórica',
+        line=dict(
+            color='red',
+            width=2,
+            dash='dot'
+        )
+    ))
+
+    fig.add_trace(go.Scatter(
+    x=contexto['data'],
+    y=contexto['nivel'],
+    mode='lines',
+    name='Nível observado',
+    line=dict(
+        color='royalblue',
+        width=4
+    ),
+    connectgaps=False,
+    hovertemplate=hover('Nível observado')
+    ))
+
+    fig.update_layout(
+        title=f'{nome_estacao} - Contexto Hidrológico Sazonal ({periodo_contexto})',
+        xaxis_title='Data',
+        yaxis_title='Nível (m)',
+        height=550,
+        hovermode='x unified',
+        template='plotly_white'
+    )
+
+    configurar_eixo_x(fig, periodo_contexto)
 
     return fig
