@@ -131,7 +131,7 @@ fig = gerar_grafico(
     P95
 )
 
-col_grafico, col_card = st.columns([4, 1.3])
+col_grafico, col_card = st.columns([5.2, 1])
 
 with col_grafico:
 
