@@ -1,5 +1,4 @@
 def calcular_indicadores(nivel_diario):
-def calcular_indicadores(nivel_diario):
 
     serie = nivel_diario['nivel'].dropna()
 
