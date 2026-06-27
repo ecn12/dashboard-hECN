@@ -1,1 +1,2 @@
-
+id,codigo,nome,rio,municipio,operador,tipo,arquivo,lat,lon,ativo
+1,58930000,Quizanga,Rio Macacu,Guapimirim,INEA,Fluviométrica,Quizanga.csv,-22.520277,-42.830555,1
