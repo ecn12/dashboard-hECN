@@ -3,6 +3,10 @@ import pandas as pd
 
 from utils.processamento import processar_dados
 from utils.indicadores import calcular_indicadores
+from utils.graficos import (
+    gerar_grafico,
+    gerar_grafico_contexto
+)
 
 st.set_page_config(
     page_title="Dashboard Hidrológico",
