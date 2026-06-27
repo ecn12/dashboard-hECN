@@ -110,7 +110,22 @@ fig = gerar_grafico(
     P95
 )
 
-st.plotly_chart(
-    fig,
-    use_container_width=True
-)
+col_grafico, col_card = st.columns([4, 1.3])
+
+with col_grafico:
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+with col_card:
+
+    mostrar_card(
+        nivel_atual,
+        percentil_sazonal,
+        percentil_serie,
+        variacao_m,
+        variacao_pct,
+        tendencia
+    )
