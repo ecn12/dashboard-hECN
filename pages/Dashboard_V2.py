@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from utils.processamento import processar_dados
+from utils.indicadores import calcular_indicadores
 
 st.set_page_config(
     page_title="Dashboard Hidrológico",
