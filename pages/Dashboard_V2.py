@@ -62,9 +62,3 @@ nome_estacao, P95, nivel_diario, estatisticas = processar_dados(df)
     variacao_pct,
     tendencia
 ) = calcular_indicadores(nivel_diario)
-
-st.success(nome_estacao)
-
-st.subheader("Primeiras linhas do arquivo")
-
-st.dataframe(df.head())
