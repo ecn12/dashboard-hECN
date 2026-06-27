@@ -11,3 +11,6 @@ def configurar_eixo_x(fig, periodo):
 
     elif periodo == 'Série completa':
         fig.update_xaxes(tickformat="%Y", dtick="M12")
+        
+def hover(nome):
+    return f'{nome}: %{{y:.2f}} m<extra></extra>'
