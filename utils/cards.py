@@ -10,100 +10,135 @@ def mostrar_card(
     tendencia
 ):
 
-    # Define cor da tendência
+    # -------------------------
+    # Cor da tendência
+    # -------------------------
+
     if "Crescente" in tendencia:
-        cor = "#1a7f37"
+        cor_tendencia = "#1a7f37"
+
     elif "Decrescente" in tendencia:
-        cor = "#c62828"
+        cor_tendencia = "#c62828"
+
     else:
-        cor = "#1f4e79"
+        cor_tendencia = "#1f4e79"
+
+    # -------------------------
+    # Cor da variação percentual
+    # -------------------------
+
+    if variacao_pct > 0:
+
+        cor_variacao = "#1a7f37"
+        seta = "↑"
+
+    elif variacao_pct < 0:
+
+        cor_variacao = "#c62828"
+        seta = "↓"
+
+    else:
+
+        cor_variacao = "#666666"
+        seta = "→"
 
     st.markdown(
         f"""
-        <div style="
-            background:white;
-            border:1px solid #d9d9d9;
-            border-radius:12px;
-            padding:18px;
-            box-shadow:0 2px 6px rgba(0,0,0,0.08);
-        ">
+<div style="
+background:white;
+border:1px solid #d9d9d9;
+border-radius:12px;
+padding:18px;
+box-shadow:0 2px 6px rgba(0,0,0,.08);
+">
 
-        <div style="
-            font-size:28px;
-            font-weight:700;
-            color:#1f4e79;
-            text-align:center;
-            margin-bottom:18px;
-        ">
-            Situação Atual
-        </div>
+<div style="
+text-align:center;
+font-size:28px;
+font-weight:700;
+color:#1f4e79;
+margin-bottom:20px;
+">
 
-        <div style="font-size:15px;color:#555;">
-            Nível Atual
-        </div>
+Situação Atual
 
-        <div style="
-            font-size:40px;
-            font-weight:700;
-            margin-bottom:22px;
-        ">
-            {nivel_atual:.2f} m
-        </div>
+</div>
 
-        <table style="
-            width:100%;
-            font-size:16px;
-            border-collapse:collapse;
-            margin-bottom:20px;
-        ">
+<div style="font-size:15px;color:#666;">
+Nível Atual
+</div>
 
-            <tr>
-                <td>Percentil Sazonal</td>
-                <td style="text-align:right;"><b>P{percentil_sazonal}</b></td>
-            </tr>
+<div style="
+font-size:38px;
+font-weight:700;
+margin-bottom:20px;
+">
 
-            <tr>
-                <td style="padding-top:8px;">Percentil Série</td>
-                <td style="padding-top:8px;text-align:right;">
-                    <b>P{percentil_serie}</b>
-                </td>
-            </tr>
+{nivel_atual:.2f} m
 
-        </table>
+</div>
 
-        <div style="
-            font-size:15px;
-            color:#555;
-            margin-bottom:4px;
-        ">
-            Variação (7 dias)
-        </div>
+<hr style="margin:10px 0 18px 0;">
 
-        <div style="
-            font-size:22px;
-            font-weight:600;
-            margin-bottom:18px;
-        ">
-            {variacao_m:+.2f} m ({variacao_pct:+.1f}%)
-        </div>
+<div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:10px;">
+<span>Percentil Sazonal</span>
+<b>P{percentil_sazonal}</b>
+</div>
 
-        <div style="
-            font-size:15px;
-            color:#555;
-            margin-bottom:4px;
-        ">
-            Tendência
-        </div>
+<div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:18px;">
+<span>Percentil Série</span>
+<b>P{percentil_serie}</b>
+</div>
 
-        <div style="
-            font-size:24px;
-            font-weight:700;
-            color:{cor};
-        ">
-            {tendencia}
-        </div>
+<hr style="margin:10px 0 18px 0;">
 
-        </div>
-        """,
+<div style="font-size:15px;color:#666;">
+Variação (7 dias)
+</div>
+
+<div style="
+font-size:18px;
+font-weight:600;
+margin-top:4px;
+">
+
+{variacao_m:+.2f} m
+
+</div>
+
+<div style="
+display:inline-block;
+margin-top:8px;
+padding:4px 10px;
+border-radius:20px;
+background:{cor_variacao}22;
+color:{cor_variacao};
+font-weight:600;
+font-size:15px;
+">
+
+{seta} {variacao_pct:+.1f}%
+
+</div>
+
+<hr style="margin:18px 0 18px 0;">
+
+<div style="font-size:15px;color:#666;">
+Tendência
+</div>
+
+<div style="
+font-size:20px;
+font-weight:700;
+margin-top:4px;
+color:{cor_tendencia};
+">
+
+{tendencia}
+
+</div>
+
+</div>
+""",
         unsafe_allow_html=True
     )
