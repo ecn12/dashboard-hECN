@@ -50,6 +50,14 @@ df = pd.read_csv(
 )
 
 nome_estacao, P95, nivel_diario, estatisticas = processar_dados(df)
+(
+    nivel_atual,
+    percentil_sazonal,
+    percentil_serie,
+    variacao_m,
+    variacao_pct,
+    tendencia
+) = calcular_indicadores(nivel_diario)
 
 st.success(nome_estacao)
 
