@@ -8,6 +8,7 @@ from utils.graficos import (
     gerar_grafico_contexto
 )
 from utils.cards import mostrar_card
+from utils.cabecalho import mostrar_cabecalho
 
 st.set_page_config(
     page_title="Dashboard Hidrológico",
@@ -175,8 +176,17 @@ with col_card:
 
 ultima_atualizacao = nivel_diario["data"].max()
 
-st.markdown(
-    f"""
+mostrar_cabecalho(
+    rio,
+    estacao,
+    operador,
+    municipio,
+    estado,
+    redec,
+    tipo,
+    ultima_atualizacao
+)
+
 # HECN – Plataforma Hidrológica
 
 ## {rio.upper()}
