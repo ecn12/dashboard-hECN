@@ -83,6 +83,19 @@ nome_estacao, P95, nivel_diario, estatisticas = processar_dados(df)
     tendencia
 ) = calcular_indicadores(nivel_diario)
 
+ultima_atualizacao = nivel_diario["data"].max()
+
+mostrar_cabecalho(
+    rio,
+    estacao,
+    operador,
+    municipio,
+    estado,
+    redec,
+    tipo,
+    ultima_atualizacao
+)
+
 st.divider()
 
 periodo_contexto = st.radio(
@@ -170,35 +183,3 @@ with col_card:
         tendencia
     )
 
-# ==========================
-# Cabeçalho da estação
-# ==========================
-
-ultima_atualizacao = nivel_diario["data"].max()
-
-mostrar_cabecalho(
-    rio,
-    estacao,
-    operador,
-    municipio,
-    estado,
-    redec,
-    tipo,
-    ultima_atualizacao
-)
-
-# HECN – Plataforma Hidrológica
-
-## {rio.upper()}
-
-### Estação {estacao} — Operador: {operador}
-
-📍 {municipio} • {estado} • REDEC {redec}
-
-📡 {tipo}
-
-🕒 Atualizado em {ultima_atualizacao.strftime('%d/%m/%Y às %H:%M')}
-
----
-"""
-)
