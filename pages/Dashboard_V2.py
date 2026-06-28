@@ -20,9 +20,11 @@ st.title("Dashboard Hidrológico")
 # Lê o cadastro das estações
 # ==========================
 
-cadastro = pd.read_csv(
-    "dados/estacoes.csv"
-)
+cadastro["ativo"] = cadastro["ativo"].astype(int)
+
+cadastro = cadastro[
+    cadastro["ativo"] == 1
+]
 
 # ==========================
 # Escolha da estação
@@ -32,6 +34,21 @@ estacao = st.selectbox(
     "Selecione a estação",
     cadastro["nome"]
 )
+dados_estacao = cadastro[
+    cadastro["nome"] == estacao
+].iloc[0]
+
+rio = dados_estacao["rio"]
+
+municipio = dados_estacao["municipio"]
+
+estado = dados_estacao["estado"]
+
+redec = dados_estacao["REDEC"]
+
+operador = dados_estacao["operador"]
+
+tipo = dados_estacao["tipo"]
 
 # ==========================
 # Descobre qual arquivo abrir
