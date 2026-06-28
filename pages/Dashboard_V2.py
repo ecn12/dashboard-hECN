@@ -20,12 +20,15 @@ st.title("Dashboard Hidrológico")
 # Lê o cadastro das estações
 # ==========================
 
+cadastro = pd.read_csv(
+    "dados/estacoes.csv"
+)
+
 cadastro["ativo"] = cadastro["ativo"].astype(int)
 
 cadastro = cadastro[
     cadastro["ativo"] == 1
 ]
-
 # ==========================
 # Escolha da estação
 # ==========================
