@@ -14,36 +14,6 @@ st.set_page_config(
     layout="wide"
 )
 
-rio = dados_estacao["rio"]
-municipio = dados_estacao["municipio"]
-estado = dados_estacao["estado"]
-redec = dados_estacao["REDEC"]
-operador = dados_estacao["operador"]
-tipo = dados_estacao["tipo"]
-
-rio = dados_estacao["rio"]
-municipio = dados_estacao["municipio"]
-estado = dados_estacao["estado"]
-redec = dados_estacao["REDEC"]
-operador = dados_estacao["operador"]
-tipo = dados_estacao["tipo"]
-
-st.markdown(
-    f"""
-# HECN – Plataforma Hidrológica
-
-## {rio.upper()}
-
-### Estação {estacao} — Operador: {operador}
-
-📍 {municipio} • {estado} • REDEC {redec}
-
-📡 {tipo}
-
----
-"""
-)
-
 # ==========================
 # Lê o cadastro das estações
 # ==========================
@@ -198,3 +168,27 @@ with col_card:
         variacao_pct,
         tendencia
     )
+
+# ==========================
+# Cabeçalho da estação
+# ==========================
+
+ultima_atualizacao = nivel_diario["data"].max()
+
+st.markdown(
+    f"""
+# HECN – Plataforma Hidrológica
+
+## {rio.upper()}
+
+### Estação {estacao} — Operador: {operador}
+
+📍 {municipio} • {estado} • REDEC {redec}
+
+📡 {tipo}
+
+🕒 Atualizado em {ultima_atualizacao.strftime('%d/%m/%Y às %H:%M')}
+
+---
+"""
+)
