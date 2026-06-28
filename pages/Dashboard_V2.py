@@ -14,6 +14,20 @@ st.set_page_config(
     layout="wide"
 )
 
+rio = dados_estacao["rio"]
+municipio = dados_estacao["municipio"]
+estado = dados_estacao["estado"]
+redec = dados_estacao["REDEC"]
+operador = dados_estacao["operador"]
+tipo = dados_estacao["tipo"]
+
+rio = dados_estacao["rio"]
+municipio = dados_estacao["municipio"]
+estado = dados_estacao["estado"]
+redec = dados_estacao["REDEC"]
+operador = dados_estacao["operador"]
+tipo = dados_estacao["tipo"]
+
 st.markdown(
     f"""
 # HECN – Plataforma Hidrológica
