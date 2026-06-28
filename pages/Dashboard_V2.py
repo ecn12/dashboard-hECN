@@ -21,7 +21,7 @@ st.title("Dashboard Hidrológico")
 # ==========================
 
 cadastro = pd.read_csv(
-    "dados/cadastro_estacoes.csv"
+    "dados/estacoes.csv"
 )
 
 # ==========================
