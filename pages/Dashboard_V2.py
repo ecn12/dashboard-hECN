@@ -14,7 +14,21 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("Dashboard Hidrológico")
+st.markdown(
+    f"""
+# HECN – Plataforma Hidrológica
+
+## {rio.upper()}
+
+### Estação {estacao} — Operador: {operador}
+
+📍 {municipio} • {estado} • REDEC {redec}
+
+📡 {tipo}
+
+---
+"""
+)
 
 # ==========================
 # Lê o cadastro das estações
