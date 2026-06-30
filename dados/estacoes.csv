@@ -1,2 +1,3 @@
 id,ativo,nome,arquivo,codigo_ana,rio,municipio,estado,REDEC,operador,tipo,latitude,longitude
 1,1,Quizanga,Quizanga.csv,XXXXXX,Rio Macacu,Guapimirim,RJ,Metropolitana,INEA,Plu/Flu,-22.520277,-42.830555
+2,1,CET Meriti,CET_Meriti.csv,XXXXX, Rio Guandu, Seropédica,RJ, Sul II, INEA, Plu/Flu,X,Y
