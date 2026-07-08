@@ -1,6 +1,56 @@
 import pandas as pd
 def processar_dados(df):
 
+# ============================================================
+# DETECÇÃO AUTOMÁTICA DO TIPO DE ARQUIVO
+# ============================================================
+
+colunas = [c.upper() for c in df.columns]
+
+# ------------------------------------------------------------
+# ANA - Vazão diária
+# ------------------------------------------------------------
+
+if "VAZAO" in colunas:
+
+    df.columns = ['estacao', 'data', 'chuva', 'nivel']
+
+    df = df.replace(['SD', '9999'], pd.NA)
+
+    df['data'] = pd.to_datetime(
+        df['data'],
+        format='%d/%m/%Y'
+    )
+
+    df['chuva'] = pd.to_numeric(
+        df['chuva'],
+        errors='coerce'
+    )
+
+    df['nivel'] = (
+        df['nivel']
+        .astype(str)
+        .str.replace(",", ".", regex=False)
+    )
+
+    df['nivel'] = pd.to_numeric(
+        df['nivel'],
+        errors='coerce'
+    )
+
+    nome_estacao = df['estacao'].dropna().iloc[0]
+
+    P95 = df['nivel'].quantile(0.05)
+
+    nivel_diario = df.set_index("data")["nivel"]
+
+
+# ------------------------------------------------------------
+# CEMADEN / INEA - Nível subdiário
+# ------------------------------------------------------------
+
+else:
+
     df.columns = ['estacao', 'datetime', 'chuva', 'nivel']
 
     df = df.replace(['SD', '9999'], pd.NA)
