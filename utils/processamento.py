@@ -5,7 +5,7 @@ def processar_dados(df):
 # DETECÇÃO AUTOMÁTICA DO TIPO DE ARQUIVO
 # ============================================================
 
-colunas = [c.upper() for c in df.columns]
+    colunas = [c.upper() for c in df.columns]
 
 # ------------------------------------------------------------
 # ANA - Vazão diária
