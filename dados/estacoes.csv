@@ -3,4 +3,4 @@ id,ativo,nome,arquivo,codigo_ana,rio,municipio,estado,REDEC,operador,tipo,latitu
 2,1,CET Meriti,CET_Meriti.csv,XXXXX,Rio Guandu,Seropédica,RJ,Sul II, INEA, Plu/Flu,X,Y
 3,1,Br 101,BR_101.csv,XXXXX,Rio Tanguá,Tanguá,RJ,Metropolitana,INEA,Plu/Flu,X,Y
 4,1,Itaperuna,Itaperuna.csv,58940000,Rio Muriaé,Itaperuna,RJ,Noroeste,ANA,Flu,X,Y
-5,1,Campos-Ponte Municipal,Campos.csv,58974000,Rio Paraíba do Sul,RJ,Norte,ANA,Flu,X,Y
+5,1,Campos-Ponte Municipal,Campos.csv,58974000,Rio Paraíba do Sul,Capos dos Goytacazes,RJ,Norte,ANA,Flu,X,Y
