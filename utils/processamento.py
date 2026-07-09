@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 def processar_dados(df):
@@ -176,7 +175,10 @@ def calcular_projecao_holt(nivel_diario,
         seasonal=None
     )
 
-    ajuste = modelo.fit()
+    ajuste = modelo.fit(
+    optimized=True,
+    use_brute=True
+)
 
     previsao = ajuste.forecast(horizonte)
 
