@@ -1,3 +1,8 @@
+import streamlit as st
+import pandas as pd
+
+from utils.processamento import processar_dados
+from utils.cabecalho import mostrar_cabecalho
 st.divider()
 
 st.info(
