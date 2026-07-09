@@ -1,5 +1,6 @@
 import pandas as pd
-
+import numpy as np
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 def processar_dados(df):
 
@@ -92,6 +93,73 @@ def processar_dados(df):
             .reset_index()
         )
 
+def calcular_projecao_holt(nivel_diario, dias_treinamento=90, horizonte=7):
+    """
+    Calcula uma projeção utilizando Holt (Exponential Smoothing).
+
+    Parâmetros
+    ----------
+    nivel_diario : DataFrame
+        Série diária com colunas:
+        data
+        nivel
+
+    dias_treinamento : int
+        Quantidade de dias utilizados para ajustar o modelo.
+
+    horizonte : int
+        Dias futuros.
+
+    Retorna
+    -------
+    observado : DataFrame
+        Últimos 7 dias observados.
+
+    previsao : DataFrame
+        Próximos 7 dias previstos.
+    """
+
+    serie = (
+        nivel_diario[["data", "nivel"]]
+        .dropna()
+        .sort_values("data")
+        .copy()
+    )
+
+    if len(serie) < 30:
+        return None, None
+
+    treino = serie.tail(dias_treinamento)
+
+    modelo = ExponentialSmoothing(
+        treino["nivel"],
+        trend="add",
+        damped_trend=True,
+        seasonal=None
+    )
+
+    ajuste = modelo.fit(
+        optimized=True,
+        use_brute=True
+    )
+
+    forecast = ajuste.forecast(horizonte)
+
+    datas_futuras = pd.date_range(
+        start=treino["data"].max() + pd.Timedelta(days=1),
+        periods=horizonte,
+        freq="D"
+    )
+
+    previsao = pd.DataFrame({
+        "data": datas_futuras,
+        "nivel": forecast.values
+    })
+
+    observado = serie.tail(7).copy()
+
+    return observado, previsao
+    
     # ==========================================================
     # COMPLETA A SÉRIE DIÁRIA
     # ==========================================================
