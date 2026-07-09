@@ -113,6 +113,8 @@ observado = nivel_diario[
 
 fig = gerar_grafico_previsao(
     observado,
+    estatisticas,
+    P95,
     nome_estacao
 )
 
