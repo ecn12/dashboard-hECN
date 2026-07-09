@@ -91,17 +91,9 @@ ultima_data = nivel_diario["data"].max()
 
 inicio = ultima_data - pd.Timedelta(days=7)
 
-ultima_data = nivel_diario["data"].max()
-
 observado = nivel_diario[
     (nivel_diario["data"] >= inicio) &
     (nivel_diario["data"] <= ultima_data)
-]
-
-ultima_data = nivel_diario["data"].max()
-
-observado = nivel_diario[
-    nivel_diario["data"] >= ultima_data - pd.Timedelta(days=7)
 ].copy()
 
 fig = gerar_grafico_previsao(
@@ -113,6 +105,6 @@ fig = gerar_grafico_previsao(
 
 st.plotly_chart(
     fig,
-    use_container_width=True
+    width="stretch"
 )
 
