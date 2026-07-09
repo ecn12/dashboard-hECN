@@ -1,5 +1,5 @@
 import pandas as pd
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
+
 
 def processar_dados(df):
 
@@ -92,7 +92,6 @@ def processar_dados(df):
             .reset_index()
         )
 
-    
     # ==========================================================
     # COMPLETA A SÉRIE DIÁRIA
     # ==========================================================
@@ -151,48 +150,3 @@ def processar_dados(df):
         nivel_diario,
         estatisticas
     )
-
-def calcular_projecao_holt(nivel_diario,
-                           dias_treinamento=90,
-                           horizonte=7):
-
-    serie = (
-        nivel_diario[["data", "nivel"]]
-        .dropna()
-        .sort_values("data")
-        .copy()
-    )
-
-    if len(serie) < 30:
-        return None, None
-
-    treino = serie.tail(dias_treinamento)
-
-    modelo = ExponentialSmoothing(
-        treino["nivel"],
-        trend="add",
-        damped_trend=True,
-        seasonal=None
-    )
-
-    ajuste = modelo.fit(
-    optimized=True,
-    use_brute=True
-)
-
-    previsao = ajuste.forecast(horizonte)
-
-    datas = pd.date_range(
-        treino["data"].max() + pd.Timedelta(days=1),
-        periods=horizonte,
-        freq="D"
-    )
-
-    observado = serie.tail(7).copy()
-
-    futuro = pd.DataFrame({
-        "data": datas,
-        "nivel": previsao.values
-    })
-
-    return observado, futuro
