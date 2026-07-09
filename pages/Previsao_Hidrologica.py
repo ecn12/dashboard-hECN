@@ -92,17 +92,6 @@ inicio = ultima_data - pd.Timedelta(days=7)
 
 ultima_data = nivel_diario["data"].max()
 
-if periodo == "15 dias":
-    inicio = ultima_data - pd.Timedelta(days=15)
-elif periodo == "1 mês":
-    inicio = ultima_data - pd.DateOffset(months=1)
-elif periodo == "4 meses":
-    inicio = ultima_data - pd.DateOffset(months=4)
-elif periodo == "12 meses":
-    inicio = ultima_data - pd.DateOffset(years=1)
-else:
-    inicio = nivel_diario["data"].min()
-
 observado = nivel_diario[
     (nivel_diario["data"] >= inicio) &
     (nivel_diario["data"] <= ultima_data)
