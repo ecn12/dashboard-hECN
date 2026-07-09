@@ -32,12 +32,12 @@ def gerar_grafico_previsao(
     previsao["mes_dia"] = previsao["data"].dt.strftime("%m-%d")
 
     previsao = previsao.merge(
-        estatisticas,
-        on="mes_dia",
-        how="left"
-    )
+    estatisticas,
+    on="mes_dia",
+    how="left"
+)
 
-    previsao["limite_superior"] = (
+previsao["limite_superior"] = (
     previsao["media"] +
     previsao["desvio_padrao"]
 )
@@ -46,12 +46,12 @@ previsao["limite_inferior"] = (
     previsao["media"] -
     previsao["desvio_padrao"]
 )
-    
-    # ======================================================
-    # OBSERVADO
-    # ======================================================
 
-    fig = go.Figure()
+# ======================================================
+# OBSERVADO
+# ======================================================
+
+fig = go.Figure()
 
     # ------------------------------------------------------
 
