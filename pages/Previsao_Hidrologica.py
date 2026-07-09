@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from utils.processamento import processar_dados
 from utils.indicadores import calcular_indicadores
 from utils.cabecalho import mostrar_cabecalho
+from utils.graficos_previsao import gerar_grafico_previsao
 
 # ==========================================================
 # CONFIGURAÇÃO DA PÁGINA
@@ -103,49 +104,20 @@ df_grafico = observado.merge(
     how="left"
 )
 
-fig_principal = gerar_grafico(
-    df_grafico,
-    nome_estacao,
-    periodo,
-    P95
-)
 
-col_grafico, col_card = st.columns([5.2, 1])
+ultima_data = nivel_diario["data"].max()
 
-with col_grafico:
-    st.plotly_chart(fig_principal, use_container_width=True)
+observado = nivel_diario[
+    nivel_diario["data"] >= ultima_data - pd.Timedelta(days=7)
+].copy()
 
-with col_card:
-    mostrar_card(
-        nivel_atual,
-        percentil_sazonal,
-        percentil_serie,
-        variacao_m,
-        variacao_pct,
-        tendencia
-    )
-
-# ==========================================================
-# CONTEXTO HIDROLÓGICO
-# ==========================================================
-
-st.divider()
-
-periodo_contexto = st.radio(
-    "Selecione o período do Contexto Hidrológico",
-    ["15 dias", "1 mês", "4 meses", "12 meses", "Série completa"],
-    horizontal=True,
-    key="contexto"
-)
-
-fig_principal = gerar_grafico(
-    df_grafico,
-    nome_estacao,
-    "7 dias",
-    P95
+fig = gerar_grafico_previsao(
+    observado,
+    nome_estacao
 )
 
 st.plotly_chart(
-    fig_contexto,
+    fig,
     use_container_width=True
 )
+
