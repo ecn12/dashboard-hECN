@@ -1,11 +1,15 @@
 import streamlit as st
 import pandas as pd
 
-from utils.processamento import processar_dados
+from utils.processamento import  (
+    processar_dados,
+    calcular_projecao_holt
+)
 from utils.indicadores import calcular_indicadores
 from utils.graficos import (
     gerar_grafico,
     gerar_grafico_contexto
+    gerar_grafico_projecao
 )
 from utils.cards import mostrar_card
 from utils.cabecalho import mostrar_cabecalho
@@ -66,6 +70,14 @@ nome_estacao, P95, nivel_diario, estatisticas = processar_dados(df)
     variacao_pct,
     tendencia
 ) = calcular_indicadores(nivel_diario)
+
+# ==========================================================
+# PROJEÇÃO HIDROLÓGICA
+# ==========================================================
+
+observado_proj, previsao_proj = calcular_projecao_holt(
+    nivel_diario
+)
 
 ultima_atualizacao = nivel_diario["data"].max()
 
@@ -163,5 +175,24 @@ fig_contexto = gerar_grafico_contexto(
 
 st.plotly_chart(
     fig_contexto,
+    use_container_width=True
+)
+
+# ==========================================================
+# PROJEÇÃO HIDROLÓGICA (7 DIAS)
+# ==========================================================
+
+st.divider()
+
+fig_projecao = gerar_grafico_projecao(
+    observado_proj,
+    previsao_proj,
+    estatisticas,
+    P95,
+    nome_estacao
+)
+
+st.plotly_chart(
+    fig_projecao,
     use_container_width=True
 )
