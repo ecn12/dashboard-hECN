@@ -37,15 +37,15 @@ def gerar_grafico_previsao(
     how="left"
 )
 
-previsao["limite_superior"] = (
-    previsao["media"] +
-    previsao["desvio_padrao"]
-)
+    previsao["limite_superior"] = (
+        previsao["media"] +
+        previsao["desvio_padrao"]
+    )
 
-previsao["limite_inferior"] = (
-    previsao["media"] -
-    previsao["desvio_padrao"]
-)
+    previsao["limite_inferior"] = (
+        previsao["media"] -
+        previsao["desvio_padrao"]
+    )
 
 # ======================================================
 # OBSERVADO
