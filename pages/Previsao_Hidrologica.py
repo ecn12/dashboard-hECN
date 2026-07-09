@@ -98,13 +98,6 @@ observado = nivel_diario[
     (nivel_diario["data"] <= ultima_data)
 ]
 
-df_grafico = observado.merge(
-    estatisticas,
-    on="mes_dia",
-    how="left"
-)
-
-
 ultima_data = nivel_diario["data"].max()
 
 observado = nivel_diario[
