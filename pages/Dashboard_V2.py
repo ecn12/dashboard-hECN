@@ -8,7 +8,7 @@ from utils.processamento import  (
 from utils.indicadores import calcular_indicadores
 from utils.graficos import (
     gerar_grafico,
-    gerar_grafico_contexto
+    gerar_grafico_contexto,
     gerar_grafico_projecao
 )
 from utils.cards import mostrar_card
