@@ -2,47 +2,58 @@ import pandas as pd
 import plotly.graph_objects as go
 
 
-def gerar_grafico_previsao(
+# ==========================================================
+# PREPARA DADOS OBSERVADOS
+# ==========================================================
+
+def preparar_historico(
     observado,
-    estatisticas,
-    P95,
-    nome_estacao
+    estatisticas
 ):
 
-    # =====================================================
-    # DADOS OBSERVADOS
-    # =====================================================
+    historico = observado.copy()
 
-    observado = observado.copy()
-
-    observado["mes_dia"] = (
-        observado["data"]
+    historico["mes_dia"] = (
+        historico["data"]
         .dt.strftime("%m-%d")
     )
 
-    observado = observado.merge(
+    historico = historico.merge(
         estatisticas,
         on="mes_dia",
         how="left"
     )
 
-    # =====================================================
-    # PREVISÃO TEMPORÁRIA (7 dias)
-    # =====================================================
+    return historico
 
-    ultima_data = observado["data"].max()
 
-    datas_futuras = pd.date_range(
-        start=ultima_data + pd.Timedelta(days=1),
-        periods=7,
+# ==========================================================
+# PREPARA PREVISÃO (TEMPORÁRIA)
+# FUTURAMENTE SERÁ SUBSTITUÍDA PELO HOLT
+# ==========================================================
+
+def preparar_previsao(
+    historico,
+    estatisticas
+):
+
+    ultima_data = historico["data"].max()
+
+    ultimo_nivel = historico["nivel"].iloc[-1]
+
+    # Primeiro ponto da previsão é o último observado
+    datas = pd.date_range(
+        start=ultima_data,
+        periods=8,
         freq="D"
     )
 
-    ultimo_nivel = observado["nivel"].iloc[-1]
-
     previsao = pd.DataFrame({
-        "data": datas_futuras,
-        "nivel": [ultimo_nivel] * len(datas_futuras)
+
+        "data": datas,
+
+        "nivel": [ultimo_nivel] * len(datas)
+
     })
 
     previsao["mes_dia"] = (
@@ -51,47 +62,128 @@ def gerar_grafico_previsao(
     )
 
     previsao = previsao.merge(
+
         estatisticas,
+
         on="mes_dia",
+
         how="left"
+
     )
 
-    # =====================================================
-    # FIGURA
-    # =====================================================
+    return previsao
+
+
+# ==========================================================
+# CALCULA LIMITES DO EIXO Y
+# ==========================================================
+
+def calcular_limites_y(
+    historico,
+    previsao,
+    P95
+):
+
+    y_min = min(
+
+        historico["nivel"].min(),
+
+        previsao["nivel"].min(),
+
+        historico["p90"].min(),
+
+        previsao["p90"].min(),
+
+        P95
+
+    )
+
+    y_max = max(
+
+        historico["nivel"].max(),
+
+        previsao["nivel"].max(),
+
+        historico["p10"].max(),
+
+        previsao["p10"].max()
+
+    )
+
+    margem = (y_max - y_min) * 0.10
+
+    return (
+
+        y_min - margem,
+
+        y_max + margem
+
+    )
+
+
+# ==========================================================
+# GRÁFICO
+# ==========================================================
+
+def gerar_grafico_previsao(
+    observado,
+    estatisticas,
+    P95,
+    nome_estacao
+):
+
+    historico = preparar_historico(
+        observado,
+        estatisticas
+    )
+
+    previsao = preparar_previsao(
+        historico,
+        estatisticas
+    )
+
+    y_min, y_max = calcular_limites_y(
+        historico,
+        previsao,
+        P95
+    )
+
+    
+
+    ultima_data = historico["data"].max()
 
     fig = go.Figure()
 
-    # =====================================================
-    # FAIXA DE NORMALIDADE (OBSERVADO)
-    # =====================================================
+    # ==========================================================
+    # FAIXA DE NORMALIDADE (HISTÓRICO)
+    # ==========================================================
 
     fig.add_trace(
         go.Scatter(
-            x=observado["data"],
-            y=observado["p10"],
+            x=historico["data"],
+            y=historico["p10"],
             mode="lines",
             line=dict(width=0),
-            showlegend=False,
-            hoverinfo="skip"
+            hoverinfo="skip",
+            showlegend=False
         )
     )
 
     fig.add_trace(
         go.Scatter(
-            x=observado["data"],
-            y=observado["p90"],
+            x=historico["data"],
+            y=historico["p90"],
             mode="lines",
             fill="tonexty",
-            fillcolor="rgba(70,130,180,0.20)",
+            fillcolor="rgba(70,130,180,0.08)",
             line=dict(width=0),
             name="Faixa de normalidade"
         )
     )
 
-    # =====================================================
+    # ==========================================================
     # FAIXA DE NORMALIDADE (PREVISÃO)
-    # =====================================================
+    # ==========================================================
 
     fig.add_trace(
         go.Scatter(
@@ -99,8 +191,8 @@ def gerar_grafico_previsao(
             y=previsao["p10"],
             mode="lines",
             line=dict(width=0),
-            showlegend=False,
-            hoverinfo="skip"
+            hoverinfo="skip",
+            showlegend=False
         )
     )
 
@@ -110,25 +202,25 @@ def gerar_grafico_previsao(
             y=previsao["p90"],
             mode="lines",
             fill="tonexty",
-            fillcolor="rgba(70,130,180,0.20)",
+            fillcolor="rgba(70,130,180,0.08)",
             line=dict(width=0),
             showlegend=False
         )
     )
 
-    # =====================================================
-    # MÉDIA
-    # =====================================================
+    # ==========================================================
+    # MÉDIA HISTÓRICA
+    # ==========================================================
 
     fig.add_trace(
         go.Scatter(
             x=pd.concat([
-                observado["data"],
-                previsao["data"]
+                historico["data"],
+                previsao["data"].iloc[1:]
             ]),
             y=pd.concat([
-                observado["media"],
-                previsao["media"]
+                historico["media"],
+                previsao["media"].iloc[1:]
             ]),
             mode="lines",
             name="Média",
@@ -139,14 +231,14 @@ def gerar_grafico_previsao(
         )
     )
 
-    # =====================================================
+    # ==========================================================
     # OBSERVADO
-    # =====================================================
+    # ==========================================================
 
     fig.add_trace(
         go.Scatter(
-            x=observado["data"],
-            y=observado["nivel"],
+            x=historico["data"],
+            y=historico["nivel"],
             mode="lines",
             name="Observado",
             line=dict(
@@ -156,9 +248,9 @@ def gerar_grafico_previsao(
         )
     )
 
-    # =====================================================
+    # ==========================================================
     # PREVISÃO
-    # =====================================================
+    # ==========================================================
 
     fig.add_trace(
         go.Scatter(
@@ -174,31 +266,34 @@ def gerar_grafico_previsao(
         )
     )
 
-    # =====================================================
+    # ==========================================================
     # Q95
-    # =====================================================
+    # ==========================================================
 
     fig.add_hline(
         y=P95,
-        line_color="orange",
-        line_width=2,
+        line=dict(
+            color="orange",
+            width=2
+        ),
         annotation_text="Q95",
         annotation_position="bottom right"
     )
 
-    # =====================================================
+    # ==========================================================
     # HOJE
-    # =====================================================
+    # ==========================================================
 
     fig.add_vline(
         x=ultima_data,
         line_dash="dash",
-        line_color="gray"
+        line_color="gray",
+        line_width=1
     )
 
-    # =====================================================
+    # ==========================================================
     # LAYOUT
-    # =====================================================
+    # ==========================================================
 
     fig.update_layout(
 
@@ -212,21 +307,25 @@ def gerar_grafico_previsao(
 
         legend=dict(
             orientation="h",
-            y=1.03,
+            y=1.04,
             x=0
         ),
-
-        xaxis_title="",
-
-        yaxis_title="Nível (m)",
 
         margin=dict(
             l=20,
             r=20,
             t=60,
             b=20
-        )
+        ),
 
+        xaxis_title="",
+
+        yaxis_title="Nível (m)"
+
+    )
+
+    fig.update_yaxes(
+        range=[y_min, y_max]
     )
 
     return fig
