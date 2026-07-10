@@ -10,6 +10,23 @@ def gerar_grafico_previsao(
 ):
 
     # =====================================================
+    # DADOS OBSERVADOS
+    # =====================================================
+
+    observado = observado.copy()
+
+    observado["mes_dia"] = (
+        observado["data"]
+        .dt.strftime("%m-%d")
+    )
+
+    observado = observado.merge(
+        estatisticas,
+        on="mes_dia",
+        how="left"
+    )
+
+    # =====================================================
     # PREVISÃO TEMPORÁRIA (7 dias)
     # =====================================================
 
@@ -28,7 +45,10 @@ def gerar_grafico_previsao(
         "nivel": [ultimo_nivel] * len(datas_futuras)
     })
 
-    previsao["mes_dia"] = previsao["data"].dt.strftime("%m-%d")
+    previsao["mes_dia"] = (
+        previsao["data"]
+        .dt.strftime("%m-%d")
+    )
 
     previsao = previsao.merge(
         estatisticas,
@@ -37,30 +57,87 @@ def gerar_grafico_previsao(
     )
 
     # =====================================================
-    # CASO NÃO EXISTAM AS COLUNAS DE LIMITES
-    # =====================================================
-
-    if (
-        "limite_superior" not in previsao.columns
-        and
-        "desvio_padrao" in previsao.columns
-    ):
-
-        previsao["limite_superior"] = (
-            previsao["media"] +
-            previsao["desvio_padrao"]
-        )
-
-        previsao["limite_inferior"] = (
-            previsao["media"] -
-            previsao["desvio_padrao"]
-        )
-
-    # =====================================================
     # FIGURA
     # =====================================================
 
     fig = go.Figure()
+
+    # =====================================================
+    # FAIXA DE NORMALIDADE (OBSERVADO)
+    # =====================================================
+
+    fig.add_trace(
+        go.Scatter(
+            x=observado["data"],
+            y=observado["p10"],
+            mode="lines",
+            line=dict(width=0),
+            showlegend=False,
+            hoverinfo="skip"
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=observado["data"],
+            y=observado["p90"],
+            mode="lines",
+            fill="tonexty",
+            fillcolor="rgba(70,130,180,0.20)",
+            line=dict(width=0),
+            name="Faixa de normalidade"
+        )
+    )
+
+    # =====================================================
+    # FAIXA DE NORMALIDADE (PREVISÃO)
+    # =====================================================
+
+    fig.add_trace(
+        go.Scatter(
+            x=previsao["data"],
+            y=previsao["p10"],
+            mode="lines",
+            line=dict(width=0),
+            showlegend=False,
+            hoverinfo="skip"
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=previsao["data"],
+            y=previsao["p90"],
+            mode="lines",
+            fill="tonexty",
+            fillcolor="rgba(70,130,180,0.20)",
+            line=dict(width=0),
+            showlegend=False
+        )
+    )
+
+    # =====================================================
+    # MÉDIA
+    # =====================================================
+
+    fig.add_trace(
+        go.Scatter(
+            x=pd.concat([
+                observado["data"],
+                previsao["data"]
+            ]),
+            y=pd.concat([
+                observado["media"],
+                previsao["media"]
+            ]),
+            mode="lines",
+            name="Média",
+            line=dict(
+                color="royalblue",
+                width=1.5
+            )
+        )
+    )
 
     # =====================================================
     # OBSERVADO
@@ -98,57 +175,6 @@ def gerar_grafico_previsao(
     )
 
     # =====================================================
-    # MÉDIA
-    # =====================================================
-
-    if "media" in previsao.columns:
-
-        fig.add_trace(
-            go.Scatter(
-                x=previsao["data"],
-                y=previsao["media"],
-                mode="lines",
-                name="Média",
-                line=dict(
-                    color="navy",
-                    width=2
-                )
-            )
-        )
-
-    # =====================================================
-    # FAIXA DE NORMALIDADE
-    # =====================================================
-
-    if (
-        "limite_superior" in previsao.columns
-        and
-        "limite_inferior" in previsao.columns
-    ):
-
-        fig.add_trace(
-            go.Scatter(
-                x=previsao["data"],
-                y=previsao["limite_superior"],
-                mode="lines",
-                line=dict(width=0),
-                showlegend=False
-            )
-        )
-
-        fig.add_trace(
-            go.Scatter(
-                x=previsao["data"],
-                y=previsao["limite_inferior"],
-                mode="lines",
-                fill="tonexty",
-                fillcolor="rgba(0,100,255,0.20)",
-                line=dict(width=0),
-                name="Faixa de normalidade"
-            )
-        )
-
-    # =====================================================
     # Q95
     # =====================================================
 
@@ -156,7 +182,8 @@ def gerar_grafico_previsao(
         y=P95,
         line_color="orange",
         line_width=2,
-        annotation_text="Q95"
+        annotation_text="Q95",
+        annotation_position="bottom right"
     )
 
     # =====================================================
@@ -181,14 +208,24 @@ def gerar_grafico_previsao(
 
         height=650,
 
+        hovermode="x unified",
+
         legend=dict(
             orientation="h",
-            y=1.02
+            y=1.03,
+            x=0
         ),
 
         xaxis_title="",
 
-        yaxis_title="Nível (m)"
+        yaxis_title="Nível (m)",
+
+        margin=dict(
+            l=20,
+            r=20,
+            t=60,
+            b=20
+        )
 
     )
 
